@@ -28,7 +28,7 @@ def test_user_scope_catalog_and_switch_lifecycle(
     invoke_ok(runner, "use", "pypi")
     invoke_ok(runner, "del", "internal")
     assert "internal" not in invoke_ok(runner, "ls").output
-    assert (isolated_env.xdg_config / "uv" / "uv.toml").is_file()
+    assert isolated_env.user_uv_config.is_file()
 
 
 def test_local_scope_catalog_and_switch_lifecycle(
@@ -49,4 +49,4 @@ def test_local_scope_catalog_and_switch_lifecycle(
     invoke_ok(runner, "use", "pypi", "--local")
     invoke_ok(runner, "del", "internal")
     assert "internal" not in invoke_ok(runner, "ls").output
-    assert not (isolated_env.xdg_config / "uv" / "uv.toml").exists()
+    assert not isolated_env.user_uv_config.exists()

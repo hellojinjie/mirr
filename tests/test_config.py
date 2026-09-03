@@ -44,11 +44,11 @@ def test_user_and_system_uv_paths_use_windows_directories(tmp_path: Path) -> Non
 
 
 def test_system_uv_paths_prefer_xdg_directories_before_etc(tmp_path: Path) -> None:
-    env = {"XDG_CONFIG_DIRS": f"{tmp_path / 'first'}:{tmp_path / 'second'}"}
+    env = {"XDG_CONFIG_DIRS": "/config/first:/config/second"}
 
     assert system_uv_config_paths(env=env, platform="linux") == [
-        tmp_path / "first" / "uv" / "uv.toml",
-        tmp_path / "second" / "uv" / "uv.toml",
+        Path("/config/first/uv/uv.toml"),
+        Path("/config/second/uv/uv.toml"),
         Path("/etc/uv/uv.toml"),
     ]
 

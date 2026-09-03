@@ -9,7 +9,7 @@ from mirr.cli import cli
 def test_global_use_rejects_named_default_with_extra_semantics(
     isolated_env: IsolatedEnvironment,
 ) -> None:
-    path = isolated_env.xdg_config / "uv" / "uv.toml"
+    path = isolated_env.user_uv_config
     path.parent.mkdir(parents=True)
     path.write_text(
         "[[index]]\n"
@@ -52,7 +52,7 @@ def test_local_use_rejects_named_pyproject_default(
 def test_global_use_rejects_duplicate_target_index_name(
     isolated_env: IsolatedEnvironment,
 ) -> None:
-    path = isolated_env.xdg_config / "uv" / "uv.toml"
+    path = isolated_env.user_uv_config
     path.parent.mkdir(parents=True)
     path.write_text(
         "[[index]]\n"
