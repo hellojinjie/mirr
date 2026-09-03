@@ -21,7 +21,7 @@ def test_add_rename_and_delete_custom_index(isolated_env: IsolatedEnvironment) -
         ],
     )
     assert result.exit_code == 0, result.output
-    store = CatalogStore(isolated_env.xdg_config / "mirr" / "config.toml")
+    store = CatalogStore(isolated_env.catalog_path)
     assert store.get("company").home == "https://packages.example.com"
 
     result = runner.invoke(cli, ["rename", "company", "internal"])
@@ -42,7 +42,7 @@ def test_catalog_command_errors_are_nonzero_and_do_not_mutate(
 
     assert result.exit_code != 0
     assert "built-in" in result.output
-    assert not (isolated_env.xdg_config / "mirr" / "config.toml").exists()
+    assert not isolated_env.catalog_path.exists()
 
 
 def test_global_use_writes_user_uv_config_and_reports_success(
@@ -54,7 +54,7 @@ def test_global_use_writes_user_uv_config_and_reports_success(
     assert "SUCCESS" in result.output
     assert "tsinghua" in result.output
     document = tomlkit.parse(
-        (isolated_env.xdg_config / "uv" / "uv.toml").read_text(encoding="utf-8")
+        isolated_env.user_uv_config.read_text(encoding="utf-8")
     )
     assert document["default-index"] == "https://pypi.tuna.tsinghua.edu.cn/simple"
 
@@ -62,7 +62,7 @@ def test_global_use_writes_user_uv_config_and_reports_success(
 def test_global_use_updates_simple_named_structured_default_in_place(
     isolated_env: IsolatedEnvironment,
 ) -> None:
-    path = isolated_env.xdg_config / "uv" / "uv.toml"
+    path = isolated_env.user_uv_config
     path.parent.mkdir(parents=True)
     path.write_text(
         "# keep this comment\n"
@@ -131,7 +131,7 @@ def test_local_use_updates_pyproject_without_writing_user_config(
     assert result.exit_code == 0, result.output
     document = tomlkit.parse(pyproject.read_text(encoding="utf-8"))
     assert document["tool"]["uv"]["default-index"] == ("https://mirrors.aliyun.com/pypi/simple")
-    assert not (isolated_env.xdg_config / "uv" / "uv.toml").exists()
+    assert not isolated_env.user_uv_config.exists()
 
 
 def test_new_local_use_requires_confirmation_or_yes(
@@ -147,7 +147,7 @@ def test_new_local_use_requires_confirmation_or_yes(
     accepted = runner.invoke(cli, ["use", "pypi", "--local", "--yes"])
     assert accepted.exit_code == 0, accepted.output
     assert (isolated_env.project / "uv.toml").exists()
-    assert not (isolated_env.xdg_config / "uv" / "uv.toml").exists()
+    assert not isolated_env.user_uv_config.exists()
 
 
 def test_active_custom_index_cannot_be_deleted(isolated_env: IsolatedEnvironment) -> None:
