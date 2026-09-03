@@ -43,21 +43,26 @@ def test_user_and_system_uv_paths_use_windows_directories(tmp_path: Path) -> Non
     ]
 
 
-def test_default_catalog_path_uses_xdg_on_linux(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
-    monkeypatch.setattr("sys.platform", "linux")
+def test_default_catalog_path_uses_xdg_on_linux(tmp_path: Path) -> None:
+    assert default_catalog_path(
+        env={"XDG_CONFIG_HOME": str(tmp_path / "xdg")},
+        platform="linux",
+        home=tmp_path / "home",
+    ) == (tmp_path / "xdg" / "mirr" / "config.toml")
 
-    assert default_catalog_path() == tmp_path / "xdg" / "mirr" / "config.toml"
+
+def test_default_catalog_path_falls_back_to_home_on_macos(tmp_path: Path) -> None:
+    assert default_catalog_path(env={}, platform="darwin", home=tmp_path / "home") == (
+        tmp_path / "home" / ".config" / "mirr" / "config.toml"
+    )
 
 
-def test_default_catalog_path_falls_back_to_home_on_macos(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
-    monkeypatch.setenv("HOME", str(tmp_path / "home"))
-    monkeypatch.setattr("sys.platform", "darwin")
-
-    assert default_catalog_path() == tmp_path / "home" / ".config" / "mirr" / "config.toml"
+def test_default_catalog_path_uses_appdata_on_windows(tmp_path: Path) -> None:
+    assert default_catalog_path(
+        env={"APPDATA": str(tmp_path / "appdata")},
+        platform="win32",
+        home=tmp_path / "home",
+    ) == (tmp_path / "appdata" / "mirr" / "config.toml")
 
 
 def test_system_uv_paths_prefer_xdg_directories_before_etc(tmp_path: Path) -> None:

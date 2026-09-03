@@ -67,13 +67,21 @@ BUILTIN_INDEXES: Mapping[str, Index] = MappingProxyType(
 _NAME_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\Z")
 
 
-def default_catalog_path() -> Path:
+def default_catalog_path(
+    *,
+    env: Optional[Mapping[str, str]] = None,
+    platform: Optional[str] = None,
+    home: Optional[Path] = None,
+) -> Path:
     """Return the platform-appropriate mirr catalog path."""
 
-    if sys.platform == "win32":
-        base = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
+    values = os.environ if env is None else env
+    target_platform = sys.platform if platform is None else platform
+    home_path = Path.home() if home is None else Path(home)
+    if target_platform == "win32":
+        base = Path(values.get("APPDATA", home_path / "AppData" / "Roaming"))
     else:
-        base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+        base = Path(values.get("XDG_CONFIG_HOME", home_path / ".config"))
     return base / "mirr" / "config.toml"
 
 
