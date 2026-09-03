@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 import tempfile
 from collections.abc import Collection, Mapping
 from dataclasses import dataclass
@@ -13,7 +14,6 @@ from typing import Optional
 from urllib.parse import SplitResult, urlsplit, urlunsplit
 
 import tomlkit
-from platformdirs import user_config_path
 from tomlkit.exceptions import TOMLKitError
 
 
@@ -70,7 +70,11 @@ _NAME_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\Z")
 def default_catalog_path() -> Path:
     """Return the platform-appropriate mirr catalog path."""
 
-    return user_config_path("mirr", appauthor=False) / "config.toml"
+    if sys.platform == "win32":
+        base = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
+    else:
+        base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+    return base / "mirr" / "config.toml"
 
 
 def normalize_url(url: str) -> str:

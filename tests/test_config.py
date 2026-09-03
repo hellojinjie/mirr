@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from mirr.catalog import CatalogStore
+from mirr.catalog import CatalogStore, default_catalog_path
 from mirr.config import (
     ConfigError,
     find_local_target,
@@ -41,6 +41,23 @@ def test_user_and_system_uv_paths_use_windows_directories(tmp_path: Path) -> Non
     assert system_uv_config_paths(env=env, platform="win32") == [
         tmp_path / "programdata" / "uv" / "uv.toml"
     ]
+
+
+def test_default_catalog_path_uses_xdg_on_linux(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
+    monkeypatch.setattr("sys.platform", "linux")
+
+    assert default_catalog_path() == tmp_path / "xdg" / "mirr" / "config.toml"
+
+
+def test_default_catalog_path_falls_back_to_home_on_macos(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setattr("sys.platform", "darwin")
+
+    assert default_catalog_path() == tmp_path / "home" / ".config" / "mirr" / "config.toml"
 
 
 def test_system_uv_paths_prefer_xdg_directories_before_etc(tmp_path: Path) -> None:
