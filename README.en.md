@@ -1,4 +1,4 @@
-# **mirr**or
+# `mirr`or
 
 [简体中文](README.md) | English
 
@@ -8,17 +8,24 @@ and multi-index configuration semantics.
 
 ## Installation
 
-mirr requires Python 3.9 or later. From a checkout:
+mirr requires Python 3.9 or later. Run it directly with [`uvx`](https://docs.astral.sh/uv/guides/tools/), no install needed:
+
+```console
+uvx mirr --version
+```
+
+Or install it as a persistent command:
+
+```console
+uv tool install mirr
+mirr --version
+```
+
+From a checkout, for development:
 
 ```console
 uv tool install .
 mirr --version
-```
-
-After the project is published, install it by distribution name:
-
-```console
-uv tool install uv-index-manager
 ```
 
 ## Migrating from nrm
@@ -43,13 +50,13 @@ not managed by the initial mirr release.
 ## Quick start
 
 ```console
-$ mirr ls
-* pypi     --- https://pypi.org/simple
-  tsinghua --- https://pypi.tuna.tsinghua.edu.cn/simple
-  aliyun   --- https://mirrors.aliyun.com/pypi/simple
-  tencent  --- https://mirrors.cloud.tencent.com/pypi/simple
-  huawei   --- https://repo.huaweicloud.com/repository/pypi/simple
-  ustc     --- https://mirrors.ustc.edu.cn/pypi/simple
+$ mirr test
+* pypi -------- 187 ms
+  tsinghua ---- 43 ms
+  aliyun ------ 96 ms
+  tencent ----- 121 ms
+  huawei ------ 88 ms
+  ustc -------- 104 ms
 
 $ mirr use tsinghua
 SUCCESS The index has been changed to 'tsinghua'.

@@ -1,5 +1,5 @@
 [project]
-name = "uv-index-manager"
+name = "mirr"
 version = "0.1.0"
 description = "An nrm-shaped package index manager for uv"
 readme = "README.md"

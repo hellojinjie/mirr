@@ -1,4 +1,4 @@
-# **mirr**or
+# `mirr`or
 
 简体中文 | [English](README.en.md)
 
@@ -7,17 +7,24 @@
 
 ## 安装
 
-mirr 需要 Python 3.9 及以上版本。从源码安装:
+mirr 需要 Python 3.9 及以上版本。无需安装,直接用 [`uvx`](https://docs.astral.sh/uv/guides/tools/) 运行:
+
+```console
+uvx mirr --version
+```
+
+或者安装为常驻命令:
+
+```console
+uv tool install mirr
+mirr --version
+```
+
+从源码安装(用于开发):
 
 ```console
 uv tool install .
 mirr --version
-```
-
-发布到 PyPI 后,也可以按发行包名安装:
-
-```console
-uv tool install uv-index-manager
 ```
 
 ## 从 nrm 迁移
@@ -41,13 +48,13 @@ uv tool install uv-index-manager
 ## 快速开始
 
 ```console
-$ mirr ls
-* pypi     --- https://pypi.org/simple
-  tsinghua --- https://pypi.tuna.tsinghua.edu.cn/simple
-  aliyun   --- https://mirrors.aliyun.com/pypi/simple
-  tencent  --- https://mirrors.cloud.tencent.com/pypi/simple
-  huawei   --- https://repo.huaweicloud.com/repository/pypi/simple
-  ustc     --- https://mirrors.ustc.edu.cn/pypi/simple
+$ mirr test
+* pypi -------- 187 ms
+  tsinghua ---- 43 ms
+  aliyun ------ 96 ms
+  tencent ----- 121 ms
+  huawei ------ 88 ms
+  ustc -------- 104 ms
 
 $ mirr use tsinghua
 SUCCESS The index has been changed to 'tsinghua'.
