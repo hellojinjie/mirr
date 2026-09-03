@@ -25,7 +25,7 @@ def test_current_uses_nrm_shaped_sentence_for_name_url_and_verbose_provenance(
         "You are using tencent index.\n"
         "URL: https://mirrors.cloud.tencent.com/pypi/simple\n"
         "Source: user:uv.toml\n"
-        f"Path: {isolated_env.xdg_config / 'uv' / 'uv.toml'}\n"
+        f"Path: {isolated_env.user_uv_config}\n"
     )
 
 

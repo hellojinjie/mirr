@@ -138,7 +138,7 @@ def test_test_command_reports_one_or_all_without_mutating_config(
     isolated_env: IsolatedEnvironment,
     monkeypatch,
 ) -> None:
-    user_config = isolated_env.xdg_config / "uv" / "uv.toml"
+    user_config = isolated_env.user_uv_config
     user_config.parent.mkdir(parents=True)
     user_config.write_text('default-index = "https://pypi.org/simple"\n', encoding="utf-8")
     original = user_config.read_bytes()

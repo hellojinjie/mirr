@@ -38,7 +38,7 @@ def test_catalog_rejects_invalid_port_without_writing(tmp_path: Path) -> None:
 def test_default_catalog_path_honors_isolated_xdg_home(
     isolated_env: IsolatedEnvironment,
 ) -> None:
-    assert default_catalog_path() == isolated_env.xdg_config / "mirr" / "config.toml"
+    assert default_catalog_path() == isolated_env.catalog_path
 
 
 def test_delete_protects_user_selection_even_when_project_overrides_it(

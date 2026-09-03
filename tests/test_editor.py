@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import stat
 from pathlib import Path
 from typing import Optional
@@ -127,6 +128,8 @@ def test_switch_preserves_existing_file_permissions(tmp_path: Path) -> None:
 
     set_default_index(LocalTarget(path, "uv", True), "https://new.example/simple")
 
+    if os.name == "nt":
+        return
     assert stat.S_IMODE(path.stat().st_mode) == 0o640
 
 
