@@ -1,44 +1,44 @@
-# mirr
+# **mirr**or
 
-`mirr` is an nrm-shaped package index manager for [uv](https://docs.astral.sh/uv/).
-It keeps the commands familiar while respecting uv's user, project, environment,
-and multi-index configuration semantics.
+简体中文 | [English](README.en.md)
 
-## Installation
+`mirr` 是一个仿照 nrm 风格设计的 [uv](https://docs.astral.sh/uv/) 包索引管理器。
+它保留了熟悉的命令形式,同时尊重 uv 在用户级、项目级、环境变量及多索引配置上的语义。
 
-mirr requires Python 3.9 or later. From a checkout:
+## 安装
+
+mirr 需要 Python 3.9 及以上版本。从源码安装:
 
 ```console
 uv tool install .
 mirr --version
 ```
 
-After the project is published, install it by distribution name:
+发布到 PyPI 后,也可以按发行包名安装:
 
 ```console
 uv tool install uv-index-manager
 ```
 
-## Migrating from nrm
+## 从 nrm 迁移
 
-The core workflows use the same command names:
+核心操作使用相同的命令名:
 
-| nrm | mirr | Purpose |
+| nrm | mirr | 作用 |
 | --- | --- | --- |
-| `nrm ls` | `mirr ls` | List indexes and mark the effective one |
-| `nrm current -u` | `mirr current -u` | Show the effective index URL |
-| `nrm use <name>` | `mirr use <name>` | Change the user-level default |
-| `nrm use <name> --local` | `mirr use <name> --local` | Change the project default |
-| `nrm add <name> <url> [home]` | `mirr add <name> <url> [home]` | Add a custom index |
-| `nrm del <name>` | `mirr del <name>` | Delete a custom index |
-| `nrm rename <name> <new-name>` | `mirr rename <name> <new-name>` | Rename a custom index |
-| `nrm home <name> [browser]` | `mirr home <name> [browser]` | Open an index homepage |
-| `nrm test [name]` | `mirr test [name]` | Measure endpoint latency |
+| `nrm ls` | `mirr ls` | 列出所有索引,并标记当前生效的索引 |
+| `nrm current -u` | `mirr current -u` | 显示当前生效的索引 URL |
+| `nrm use <name>` | `mirr use <name>` | 修改用户级默认索引 |
+| `nrm use <name> --local` | `mirr use <name> --local` | 修改项目级默认索引 |
+| `nrm add <name> <url> [home]` | `mirr add <name> <url> [home]` | 添加自定义索引 |
+| `nrm del <name>` | `mirr del <name>` | 删除自定义索引 |
+| `nrm rename <name> <new-name>` | `mirr rename <name> <new-name>` | 重命名自定义索引 |
+| `nrm home <name> [browser]` | `mirr home <name> [browser]` | 打开索引主页 |
+| `nrm test [name]` | `mirr test [name]` | 测量端点延迟 |
 
-Authentication, publishing, npm scopes, and package-specific uv source bindings are
-not managed by the initial mirr release.
+认证、发布、npm scope,以及针对特定包的 uv source 绑定,目前初始版本的 mirr 尚未涉及。
 
-## Quick start
+## 快速开始
 
 ```console
 $ mirr ls
@@ -56,21 +56,19 @@ $ mirr current
 You are using tsinghua index.
 ```
 
-Run `mirr use` without a name in an interactive terminal to choose from the catalog.
-For scripts, always provide the name explicitly.
+在交互式终端中不带名称执行 `mirr use` 可以从目录列表中选择;
+在脚本中请始终显式指定名称。
 
-## Commands
+## 命令
 
 ### `mirr ls`
 
-Lists built-in and custom entries. The `*` marks the index effective in the current
-directory, not merely the last user-level selection.
+列出内置和自定义的索引条目。`*` 标记的是当前目录下实际生效的索引,而不仅仅是上一次用户级的选择。
 
 ### `mirr current`
 
-Uses nrm's familiar sentence-shaped output. It shows the catalog name when the
-effective URL is known, `--show-url` substitutes the URL, and an uncataloged URL
-is followed by the `mirr add` command needed to catalog it.
+沿用 nrm 熟悉的语句式输出风格。已知有效 URL 对应的目录名称时会直接显示该名称,
+`--show-url` 会改为显示 URL,若当前 URL 不在目录中,则会附带提示所需的 `mirr add` 命令。
 
 ```console
 mirr current --show-url
@@ -78,40 +76,38 @@ mirr current -u
 mirr current --verbose
 ```
 
-Verbose output includes the source and configuration path where applicable.
+详细模式(verbose)会附加显示来源以及相应的配置文件路径(如适用)。
 
 ### `mirr use [name]`
 
-Changes uv's user-level `default-index` while preserving unrelated settings and named
-supplemental indexes.
+修改 uv 的用户级 `default-index`,同时保留其他不相关的设置及已命名的附加索引。
 
 ```console
 mirr use pypi
 mirr use tsinghua
 ```
 
-If a project setting or `UV_DEFAULT_INDEX` still overrides the new user setting, mirr
-writes the requested user configuration and prints a warning explaining the active
-override.
+如果项目级配置或 `UV_DEFAULT_INDEX` 环境变量仍然覆盖了新的用户级设置,
+mirr 依然会写入所请求的用户配置,并打印警告说明当前生效的覆盖来源。
 
 ### `mirr use [name] --local`
 
-Changes only the current project:
+仅修改当前项目:
 
-1. Use the nearest applicable existing `uv.toml`.
-2. Otherwise update `[tool.uv]` in the nearest `pyproject.toml`.
-3. Otherwise create `uv.toml` in the current directory after confirmation.
+1. 优先使用最近一层已存在的 `uv.toml`。
+2. 否则更新最近一层 `pyproject.toml` 中的 `[tool.uv]`。
+3. 如果都不存在,则在用户确认后在当前目录创建 `uv.toml`。
 
-Use `--yes` when a non-interactive script is allowed to create a new local `uv.toml`:
+在非交互式脚本中允许创建新的本地 `uv.toml` 时,使用 `--yes`:
 
 ```console
 mirr use aliyun --local --yes
 ```
 
-mirr does not create a colocated `uv.toml` when `pyproject.toml` is available, because
-uv would then ignore that file's `[tool.uv]` settings.
+当 `pyproject.toml` 存在时,mirr 不会额外创建同级的 `uv.toml`,
+因为这样会导致 uv 忽略该文件中 `[tool.uv]` 的设置。
 
-### Custom catalog entries
+### 自定义目录条目
 
 ```console
 mirr add company https://packages.example.com/simple https://packages.example.com
@@ -119,10 +115,9 @@ mirr rename company internal
 mirr del internal
 ```
 
-Built-in entries cannot be renamed or deleted. An active custom entry must be replaced
-by another selection before deletion.
+内置条目无法被重命名或删除。删除一个正在生效的自定义条目前,必须先切换到其他条目。
 
-### Homepages and reachability
+### 主页与可达性
 
 ```console
 mirr home pypi
@@ -132,35 +127,31 @@ mirr test
 mirr test --timeout 10
 ```
 
-`mirr test` performs a lightweight, TLS-verified `HEAD` request against the `pip/`
-project page beneath each Simple Repository endpoint; it never downloads the root index.
-If a server does not support `HEAD`, mirr requests and reads at most one byte instead.
-All-entry tests use bounded concurrency and print results in catalog order. As in nrm,
-`*` marks the effective current index, columns are aligned, and the fastest successful
-result is highlighted. This is a reachability and latency check, not a package-download
-throughput benchmark.
+`mirr test` 会对每个 Simple Repository 端点下的 `pip/` 项目页面发起一次轻量级、
+经过 TLS 校验的 `HEAD` 请求,绝不会下载根索引。如果服务器不支持 `HEAD`,
+mirr 会改为发起请求并只读取最多一个字节。批量测试所有条目时采用有限并发,
+并按目录顺序打印结果。与 nrm 一样,`*` 标记当前生效的索引,各列对齐显示,
+最快的成功结果会被高亮。这是一次可达性与延迟检测,而非包下载吞吐量基准测试。
 
-## Configuration precedence
+## 配置优先级
 
-`mirr current` evaluates persistent and environment configuration in this order:
+`mirr current` 按以下顺序评估持久化配置与环境变量:
 
-1. `UV_DEFAULT_INDEX` and the supported legacy `UV_INDEX_URL` alias
-2. Project `uv.toml` or `[tool.uv]` in `pyproject.toml`
-3. User `uv.toml`
-4. System `uv.toml`
-5. uv's implicit `https://pypi.org/simple` default
+1. `UV_DEFAULT_INDEX`,以及仍受支持的旧版别名 `UV_INDEX_URL`
+2. 项目级 `uv.toml` 或 `pyproject.toml` 中的 `[tool.uv]`
+3. 用户级 `uv.toml`
+4. 系统级 `uv.toml`
+5. uv 隐式的默认值 `https://pypi.org/simple`
 
-Command-line options passed to a later uv invocation are not predictable and therefore
-are not included in `mirr current`.
+传递给后续 uv 调用的命令行选项是不可预测的,因此不会被 `mirr current` 纳入考虑。
 
-User uv configuration follows uv's platform conventions, including
-`~/.config/uv/uv.toml` with XDG support on Linux and macOS and
-`%APPDATA%\uv\uv.toml` on Windows. Custom mirr entries use the platform's mirr user
-configuration directory.
+用户级 uv 配置遵循 uv 的平台约定,包括 Linux 和 macOS 上支持 XDG 的
+`~/.config/uv/uv.toml`,以及 Windows 上的 `%APPDATA%\uv\uv.toml`。
+mirr 的自定义条目则使用对应平台上 mirr 自身的用户配置目录。
 
-## Conflict recovery
+## 冲突恢复
 
-mirr normally writes a scalar `default-index`. A simple anonymous structured default such as:
+mirr 通常写入的是标量形式的 `default-index`。类似下面这种简单的匿名结构化默认值:
 
 ```toml
 [[index]]
@@ -168,23 +159,21 @@ url = "https://old.example/simple"
 default = true
 ```
 
-can be replaced safely. A user-level `uv.toml` default containing only `name`, `url`, and
-`default` is updated in place so `mirr use <name>` remains compatible with uv's named-index
-format. Named defaults in `pyproject.toml`, duplicate target names, authentication behavior,
-publish URLs, and other extra semantics are left unchanged and reported as conflicts for
-manual review. mirr also refuses malformed TOML and leaves the original file unchanged when
-parsing, validation, or atomic replacement fails.
+可以被安全地替换。若用户级 `uv.toml` 中的默认值只包含 `name`、`url` 和 `default`,
+会被原地更新,从而使 `mirr use <name>` 与 uv 的具名索引格式保持兼容。
+`pyproject.toml` 中的具名默认值、重复的目标名称、认证行为、发布 URL 及其他额外语义
+则保持不变,并作为冲突提示留给人工处理。当解析、校验或原子替换失败时,
+mirr 也会拒绝处理格式错误的 TOML,并保持原文件不变。
 
-## Security boundaries
+## 安全边界
 
-- Catalog URLs containing embedded usernames, passwords, or tokens are rejected.
-- mirr does not maintain a credential store or print URL credentials in errors.
-- Configure private-index credentials with uv's supported authentication mechanisms.
-- TLS verification remains enabled during `mirr test`.
-- Supplying a browser launches an argument vector directly; mirr does not construct a
-  shell command.
+- 拒绝包含内嵌用户名、密码或令牌的目录 URL。
+- mirr 不维护凭证存储,也不会在错误信息中打印 URL 中的凭证。
+- 私有索引的凭证请使用 uv 自身支持的认证机制配置。
+- `mirr test` 期间始终保持 TLS 校验开启。
+- 传入浏览器参数时,直接以参数向量启动进程,mirr 不会构造 shell 命令。
 
-## Development
+## 开发
 
 ```console
 uv sync --locked
