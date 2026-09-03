@@ -109,14 +109,14 @@ def test_effective_index_precedence_environment_project_user_system(tmp_path: Pa
     project = tmp_path / "project"
     project.mkdir()
     (project / "uv.toml").write_text(
-        'default-index = "https://project.example/simple"\n', encoding="utf-8"
+        'index-url = "https://project.example/simple"\n', encoding="utf-8"
     )
     user = tmp_path / "user" / "uv.toml"
     user.parent.mkdir()
-    user.write_text('default-index = "https://user.example/simple"\n', encoding="utf-8")
+    user.write_text('index-url = "https://user.example/simple"\n', encoding="utf-8")
     system = tmp_path / "system" / "uv.toml"
     system.parent.mkdir()
-    system.write_text('default-index = "https://system.example/simple"\n', encoding="utf-8")
+    system.write_text('index-url = "https://system.example/simple"\n', encoding="utf-8")
 
     effective = resolve_effective_index(
         start=project,

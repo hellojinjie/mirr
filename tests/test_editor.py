@@ -31,10 +31,12 @@ def test_uv_toml_switch_preserves_comments_and_supplemental_indexes(tmp_path: Pa
     document = tomlkit.parse(content)
     assert "# keep this comment" in content
     assert "index-url" not in document
-    assert document["default-index"] == "https://pypi.org/simple"
     assert document["preview"] is True
     assert document["index"][0]["name"] == "pytorch"
     assert document["index"][0]["explicit"] is True
+    assert document["index"][1]["url"] == "https://pypi.org/simple"
+    assert document["index"][1]["default"] is True
+    assert "name" not in document["index"][1]
 
 
 def test_pyproject_switch_preserves_project_and_updates_tool_uv(tmp_path: Path) -> None:
@@ -51,10 +53,13 @@ def test_pyproject_switch_preserves_project_and_updates_tool_uv(tmp_path: Path) 
     assert "# project comment" in content
     assert document["project"]["name"] == "demo"
     assert document["tool"]["uv"]["preview"] is True
-    assert document["tool"]["uv"]["default-index"] == "https://pypi.org/simple"
+    assert "index-url" not in document["tool"]["uv"]
+    assert document["tool"]["uv"]["index"][0]["url"] == "https://pypi.org/simple"
+    assert document["tool"]["uv"]["index"][0]["default"] is True
+    assert "name" not in document["tool"]["uv"]["index"][0]
 
 
-def test_simple_structured_default_is_replaced_by_scalar_default(tmp_path: Path) -> None:
+def test_simple_anonymous_structured_default_is_updated_in_place(tmp_path: Path) -> None:
     path = tmp_path / "uv.toml"
     path.write_text(
         '[[index]]\nurl = "https://old.example/simple"\ndefault = true\n',
@@ -64,8 +69,11 @@ def test_simple_structured_default_is_replaced_by_scalar_default(tmp_path: Path)
     set_default_index(LocalTarget(path, "uv", True), "https://new.example/simple")
 
     document = tomlkit.parse(path.read_text(encoding="utf-8"))
-    assert document["default-index"] == "https://new.example/simple"
-    assert not document.get("index")
+    assert "index-url" not in document
+    assert len(document["index"]) == 1
+    assert document["index"][0]["url"] == "https://new.example/simple"
+    assert document["index"][0]["default"] is True
+    assert "name" not in document["index"][0]
 
 
 def test_structured_default_with_extra_semantics_is_rejected_unchanged(tmp_path: Path) -> None:
@@ -99,7 +107,7 @@ def test_malformed_configuration_is_rejected_unchanged(tmp_path: Path) -> None:
 
 def test_failed_atomic_replace_leaves_original_and_removes_temporary_file(tmp_path: Path) -> None:
     path = tmp_path / "uv.toml"
-    path.write_text('default-index = "https://old.example/simple"\n', encoding="utf-8")
+    path.write_text('index-url = "https://old.example/simple"\n', encoding="utf-8")
     original = path.read_bytes()
     observed_source: Optional[Path] = None
 
@@ -123,7 +131,7 @@ def test_failed_atomic_replace_leaves_original_and_removes_temporary_file(tmp_pa
 
 def test_switch_preserves_existing_file_permissions(tmp_path: Path) -> None:
     path = tmp_path / "uv.toml"
-    path.write_text('default-index = "https://old.example/simple"\n', encoding="utf-8")
+    path.write_text('index-url = "https://old.example/simple"\n', encoding="utf-8")
     path.chmod(0o640)
 
     set_default_index(LocalTarget(path, "uv", True), "https://new.example/simple")
@@ -138,6 +146,6 @@ def test_new_local_uv_toml_is_created_with_selected_default(tmp_path: Path) -> N
 
     set_default_index(LocalTarget(path, "new", False), "https://pypi.org/simple")
 
-    assert tomlkit.parse(path.read_text(encoding="utf-8"))["default-index"] == (
-        "https://pypi.org/simple"
-    )
+    document = tomlkit.parse(path.read_text(encoding="utf-8"))
+    assert document["index"][0]["url"] == "https://pypi.org/simple"
+    assert document["index"][0]["default"] is True

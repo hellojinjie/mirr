@@ -215,6 +215,7 @@ class CatalogStore:
             with tempfile.NamedTemporaryFile(
                 mode="w",
                 encoding="utf-8",
+                newline="",
                 dir=self.path.parent,
                 prefix=f".{self.path.name}.",
                 delete=False,

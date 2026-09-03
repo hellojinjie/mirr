@@ -56,7 +56,10 @@ def test_global_use_writes_user_uv_config_and_reports_success(
     document = tomlkit.parse(
         isolated_env.user_uv_config.read_text(encoding="utf-8")
     )
-    assert document["default-index"] == "https://pypi.tuna.tsinghua.edu.cn/simple"
+    assert "index-url" not in document
+    assert document["index"][0]["name"] == "tsinghua"
+    assert document["index"][0]["url"] == "https://pypi.tuna.tsinghua.edu.cn/simple"
+    assert document["index"][0]["default"] is True
 
 
 def test_global_use_updates_simple_named_structured_default_in_place(
@@ -79,7 +82,7 @@ def test_global_use_updates_simple_named_structured_default_in_place(
     content = path.read_text(encoding="utf-8")
     document = tomlkit.parse(content)
     assert "# keep this comment" in content
-    assert "default-index" not in document
+    assert "index-url" not in document
     assert len(document["index"]) == 1
     assert document["index"][0]["name"] == "aliyun"
     assert document["index"][0]["url"] == "https://mirrors.aliyun.com/pypi/simple"
@@ -90,7 +93,7 @@ def test_global_use_warns_when_project_configuration_still_wins(
     isolated_env: IsolatedEnvironment,
 ) -> None:
     (isolated_env.project / "uv.toml").write_text(
-        'default-index = "https://project.example/simple"\n', encoding="utf-8"
+        'index-url = "https://project.example/simple"\n', encoding="utf-8"
     )
 
     result = CliRunner().invoke(cli, ["use", "pypi"])
@@ -130,8 +133,41 @@ def test_local_use_updates_pyproject_without_writing_user_config(
 
     assert result.exit_code == 0, result.output
     document = tomlkit.parse(pyproject.read_text(encoding="utf-8"))
-    assert document["tool"]["uv"]["default-index"] == ("https://mirrors.aliyun.com/pypi/simple")
+    assert "index-url" not in document["tool"]["uv"]
+    assert document["tool"]["uv"]["index"][0]["url"] == ("https://mirrors.aliyun.com/pypi/simple")
+    assert document["tool"]["uv"]["index"][0]["default"] is True
+    assert "name" not in document["tool"]["uv"]["index"][0]
     assert not isolated_env.user_uv_config.exists()
+
+
+def test_repeated_global_use_keeps_a_single_structured_entry(
+    isolated_env: IsolatedEnvironment,
+) -> None:
+    runner = CliRunner()
+    assert runner.invoke(cli, ["use", "tsinghua"]).exit_code == 0
+    assert runner.invoke(cli, ["use", "aliyun"]).exit_code == 0
+
+    document = tomlkit.parse(isolated_env.user_uv_config.read_text(encoding="utf-8"))
+    assert len(document["index"]) == 1
+    assert document["index"][0]["name"] == "aliyun"
+    assert document["index"][0]["url"] == "https://mirrors.aliyun.com/pypi/simple"
+
+
+def test_repeated_local_use_keeps_a_single_anonymous_pyproject_entry(
+    isolated_env: IsolatedEnvironment,
+) -> None:
+    pyproject = isolated_env.project / "pyproject.toml"
+    pyproject.write_text('[project]\nname = "demo"\n', encoding="utf-8")
+    runner = CliRunner()
+
+    assert runner.invoke(cli, ["use", "tsinghua", "--local"]).exit_code == 0
+    second = runner.invoke(cli, ["use", "aliyun", "--local"])
+    assert second.exit_code == 0, second.output
+
+    document = tomlkit.parse(pyproject.read_text(encoding="utf-8"))
+    assert len(document["tool"]["uv"]["index"]) == 1
+    assert document["tool"]["uv"]["index"][0]["url"] == "https://mirrors.aliyun.com/pypi/simple"
+    assert "name" not in document["tool"]["uv"]["index"][0]
 
 
 def test_new_local_use_requires_confirmation_or_yes(

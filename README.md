@@ -87,7 +87,8 @@ mirr current --verbose
 
 ### `mirr use [name]`
 
-修改 uv 的用户级 `default-index`,同时保留其他不相关的设置及已命名的附加索引。
+修改 uv 的用户级默认索引(写入结构化的 `[[index]] default = true` 条目),同时保留其他
+不相关的设置及已命名的附加索引。
 
 ```console
 mirr use pypi
@@ -158,18 +159,28 @@ mirr 的自定义条目则使用对应平台上 mirr 自身的用户配置目录
 
 ## 冲突恢复
 
-mirr 通常写入的是标量形式的 `default-index`。类似下面这种简单的匿名结构化默认值:
+mirr 写入的是 uv 推荐的结构化形式(`--default-index`/`[[index]] default = true`),
+而不是被 uv 官方文档标记为 legacy 的标量 `index-url`(`default-index` 本身则从来都
+不是合法的配置文件字段,只是 `--default-index` 命令行参数与 `UV_DEFAULT_INDEX`
+环境变量的名称,写入它会导致 uv 解析配置时报错)。若切换前已经存在遗留的 `index-url`
+标量,会在写入新的结构化默认值时一并删除,避免同一份配置里出现两个相互冲突的默认索引。
+
+在用户级 `uv.toml` 中,mirr 会给它写入的条目带上目录名称(如 `name = "tsinghua"`),
+下次 `mirr use <name>` 时按名原地更新,不会不断追加新条目:
 
 ```toml
 [[index]]
-url = "https://old.example/simple"
+name = "tsinghua"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 default = true
 ```
 
-可以被安全地替换。若用户级 `uv.toml` 中的默认值只包含 `name`、`url` 和 `default`,
-会被原地更新,从而使 `mirr use <name>` 与 uv 的具名索引格式保持兼容。
-`pyproject.toml` 中的具名默认值、重复的目标名称、认证行为、发布 URL 及其他额外语义
-则保持不变,并作为冲突提示留给人工处理。当解析、校验或原子替换失败时,
+`pyproject.toml` 通常由团队共享、经过审查,因此 mirr 在其中写入的默认值**不带名字**
+(`[[tool.uv.index]] url = "..." default = true`),并且从不自动修改或重命名一个已经
+带 `name` 的默认值——那属于冲突,需要人工处理。无论哪种文件,只要现有的默认值除了
+`name`、`url`、`default` 之外还带有其他字段(`explicit`、`authenticate` 等未知语义)、
+或者存在多个 `default = true` 条目、或者切换后会与另一个已命名条目重名,mirr 都会拒绝
+自动处理,并保持原文件不变,把冲突留给人工解决。当解析、校验或原子替换失败时,
 mirr 也会拒绝处理格式错误的 TOML,并保持原文件不变。
 
 ## 安全边界

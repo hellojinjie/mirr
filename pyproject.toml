@@ -1,6 +1,6 @@
 [project]
 name = "mirr"
-version = "0.1.0"
+version = "0.1.1"
 description = "An nrm-shaped package index manager for uv"
 readme = "README.md"
 requires-python = ">=3.9"

@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import os
+import shutil
 import ssl
+import subprocess
+import tempfile
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 
@@ -50,7 +54,7 @@ def test_delete_protects_user_selection_even_when_project_overrides_it(
     )
     assert runner.invoke(cli, ["use", "company"]).exit_code == 0
     (isolated_env.project / "uv.toml").write_text(
-        'default-index = "https://pypi.org/simple"\n', encoding="utf-8"
+        'index-url = "https://pypi.org/simple"\n', encoding="utf-8"
     )
 
     result = runner.invoke(cli, ["del", "company"])
@@ -83,7 +87,7 @@ def test_injected_temporary_write_failure_leaves_original(
     monkeypatch,
 ) -> None:
     path = tmp_path / "uv.toml"
-    path.write_text('default-index = "https://old.example/simple"\n', encoding="utf-8")
+    path.write_text('index-url = "https://old.example/simple"\n', encoding="utf-8")
     original = path.read_bytes()
 
     def fail_write(*args, **kwargs):
@@ -95,6 +99,46 @@ def test_injected_temporary_write_failure_leaves_original(
         set_default_index(LocalTarget(path, "uv", True), "https://new.example/simple")
 
     assert path.read_bytes() == original
+
+
+def test_editor_writes_disable_platform_newline_translation(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """`tempfile.NamedTemporaryFile(mode="w")` defaults to translating '\\n' to
+    os.linesep on write. tomlkit always renders '\\n'; without `newline=""` the
+    same edit produces CRLF-terminated uv.toml/pyproject.toml files on Windows
+    while Linux/macOS keep LF, so files written on one OS diverge from the
+    other even though mirr made the identical edit."""
+
+    path = tmp_path / "uv.toml"
+    captured: dict = {}
+    real_named_temporary_file = tempfile.NamedTemporaryFile
+
+    def spy(*args, **kwargs):
+        captured.update(kwargs)
+        return real_named_temporary_file(*args, **kwargs)
+
+    monkeypatch.setattr("mirr.editor.tempfile.NamedTemporaryFile", spy)
+    set_default_index(LocalTarget(path, "new", False), "https://pypi.org/simple")
+
+    assert captured.get("newline") == ""
+
+
+def test_catalog_writes_disable_platform_newline_translation(
+    tmp_path: Path, monkeypatch
+) -> None:
+    path = tmp_path / "mirr.toml"
+    captured: dict = {}
+    real_named_temporary_file = tempfile.NamedTemporaryFile
+
+    def spy(*args, **kwargs):
+        captured.update(kwargs)
+        return real_named_temporary_file(*args, **kwargs)
+
+    monkeypatch.setattr("mirr.catalog.tempfile.NamedTemporaryFile", spy)
+    CatalogStore(path).add("company", "https://packages.example.com/simple")
+
+    assert captured.get("newline") == ""
 
 
 @pytest.mark.parametrize(
@@ -141,3 +185,32 @@ def test_requested_browser_launch_failure_is_reported(tmp_path: Path) -> None:
             browser=str(executable),
             launch=fail_launch,
         )
+
+
+@pytest.mark.skipif(shutil.which("uv") is None, reason="uv binary not available")
+@pytest.mark.parametrize("kind", ["uv", "pyproject"])
+def test_written_config_is_accepted_by_real_uv(tmp_path: Path, kind: str) -> None:
+    """`default-index` is only a uv CLI flag / env var name, never a config
+    file field: uv rejects it with `unknown field` and refuses to run. mirr
+    must write a key uv's TOML parser actually recognizes."""
+
+    if kind == "uv":
+        path = tmp_path / "uv.toml"
+    else:
+        path = tmp_path / "pyproject.toml"
+        path.write_text('[project]\nname = "demo"\nversion = "0.1.0"\n', encoding="utf-8")
+
+    set_default_index(LocalTarget(path, kind, path.exists()), "https://pypi.org/simple")
+
+    env = dict(os.environ)
+    if kind == "uv":
+        env["UV_CONFIG_FILE"] = str(path)
+    result = subprocess.run(
+        ["uv", "pip", "list"],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert "unknown field" not in result.stderr, result.stderr

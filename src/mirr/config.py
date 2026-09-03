@@ -102,10 +102,9 @@ def _configured_default(path: Path, kind: str) -> Optional[str]:
     if not isinstance(settings, dict):
         raise ConfigError(f"uv settings must be a table in {path}")
 
-    for key in ("default-index", "index-url"):
-        value = settings.get(key)
-        if value is not None:
-            return str(value)
+    value = settings.get("index-url")
+    if value is not None:
+        return str(value)
 
     indexes = settings.get("index", [])
     defaults = [
