@@ -3,7 +3,7 @@ from __future__ import annotations
 from click.testing import CliRunner
 from conftest import IsolatedEnvironment
 
-from uim.cli import cli
+from mirr.cli import cli
 
 
 def invoke_ok(runner: CliRunner, *args: str):

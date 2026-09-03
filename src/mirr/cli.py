@@ -1,4 +1,4 @@
-"""Command-line interface for uim."""
+"""Command-line interface for mirr."""
 
 from __future__ import annotations
 
@@ -8,10 +8,10 @@ from typing import Optional
 
 import click
 
-from uim import __version__
-from uim.browser import BrowserError, open_index_home
-from uim.catalog import CatalogError, CatalogStore, normalize_url
-from uim.config import (
+from mirr import __version__
+from mirr.browser import BrowserError, open_index_home
+from mirr.catalog import CatalogError, CatalogStore, normalize_url
+from mirr.config import (
     ConfigError,
     LocalTarget,
     find_local_target,
@@ -20,8 +20,8 @@ from uim.config import (
     resolve_effective_index,
     user_uv_config_path,
 )
-from uim.editor import ConfigEditorError, set_default_index
-from uim.probe import probe_indexes
+from mirr.editor import ConfigEditorError, set_default_index
+from mirr.probe import probe_indexes
 
 
 def _is_interactive() -> bool:
@@ -41,7 +41,7 @@ def _click_error(error: Exception) -> click.ClickException:
 
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
-@click.version_option(__version__, prog_name="uim")
+@click.version_option(__version__, prog_name="mirr")
 def cli() -> None:
     """Manage uv package indexes quickly."""
 
@@ -77,8 +77,8 @@ def current(show_url: bool, verbose: bool) -> None:
         raise _click_error(exc) from exc
     name = match_catalog_name(effective.url, entries)
     if name is None:
-        click.echo(f"Your current index({effective.url}) is not included in the uim indexes.")
-        click.echo("Use the uim add <name> <url> [home] command to add it.")
+        click.echo(f"Your current index({effective.url}) is not included in the mirr indexes.")
+        click.echo("Use the mirr add <name> <url> [home] command to add it.")
     else:
         value = effective.url if show_url else name
         click.echo(f"You are using {click.style(value, fg='green')} index.")

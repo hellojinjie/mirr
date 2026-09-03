@@ -68,9 +68,9 @@ _NAME_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\Z")
 
 
 def default_catalog_path() -> Path:
-    """Return the platform-appropriate uim catalog path."""
+    """Return the platform-appropriate mirr catalog path."""
 
-    return user_config_path("uim", appauthor=False) / "config.toml"
+    return user_config_path("mirr", appauthor=False) / "config.toml"
 
 
 def normalize_url(url: str) -> str:

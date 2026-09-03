@@ -4,8 +4,8 @@ import tomlkit
 from click.testing import CliRunner
 from conftest import IsolatedEnvironment
 
-from uim.catalog import CatalogStore
-from uim.cli import cli
+from mirr.catalog import CatalogStore
+from mirr.cli import cli
 
 
 def test_add_rename_and_delete_custom_index(isolated_env: IsolatedEnvironment) -> None:
@@ -21,7 +21,7 @@ def test_add_rename_and_delete_custom_index(isolated_env: IsolatedEnvironment) -
         ],
     )
     assert result.exit_code == 0, result.output
-    store = CatalogStore(isolated_env.xdg_config / "uim" / "config.toml")
+    store = CatalogStore(isolated_env.xdg_config / "mirr" / "config.toml")
     assert store.get("company").home == "https://packages.example.com"
 
     result = runner.invoke(cli, ["rename", "company", "internal"])
@@ -42,7 +42,7 @@ def test_catalog_command_errors_are_nonzero_and_do_not_mutate(
 
     assert result.exit_code != 0
     assert "built-in" in result.output
-    assert not (isolated_env.xdg_config / "uim" / "config.toml").exists()
+    assert not (isolated_env.xdg_config / "mirr" / "config.toml").exists()
 
 
 def test_global_use_writes_user_uv_config_and_reports_success(
@@ -111,7 +111,7 @@ def test_use_without_name_prompts_in_interactive_terminal(
     isolated_env: IsolatedEnvironment,
     monkeypatch,
 ) -> None:
-    monkeypatch.setattr("uim.cli._is_interactive", lambda: True)
+    monkeypatch.setattr("mirr.cli._is_interactive", lambda: True)
 
     result = CliRunner().invoke(cli, ["use"], input="pypi\n")
 

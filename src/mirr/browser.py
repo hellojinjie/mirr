@@ -9,7 +9,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Callable, Optional
 
-from uim.catalog import Index
+from mirr.catalog import Index
 
 
 class BrowserError(RuntimeError):

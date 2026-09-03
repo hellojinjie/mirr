@@ -9,10 +9,10 @@ import pytest
 from click.testing import CliRunner
 from conftest import IsolatedEnvironment
 
-from uim.browser import BrowserError, open_index_home
-from uim.catalog import Index
-from uim.cli import cli
-from uim.probe import ProbeResult, probe_index, probe_indexes
+from mirr.browser import BrowserError, open_index_home
+from mirr.catalog import Index
+from mirr.cli import cli
+from mirr.probe import ProbeResult, probe_index, probe_indexes
 
 
 class FakeResponse:
@@ -126,7 +126,7 @@ def test_home_command_uses_catalog_homepage(
     def record(index: Index, browser: Optional[str] = None) -> None:
         opened.append(f"{index.name}:{browser or 'default'}")
 
-    monkeypatch.setattr("uim.cli.open_index_home", record)
+    monkeypatch.setattr("mirr.cli.open_index_home", record)
 
     result = CliRunner().invoke(cli, ["home", "pypi"])
 
@@ -146,7 +146,7 @@ def test_test_command_reports_one_or_all_without_mutating_config(
     def successful(indexes, **kwargs):
         return [ProbeResult(index.name, index.url, True, 12.5, None) for index in indexes]
 
-    monkeypatch.setattr("uim.cli.probe_indexes", successful)
+    monkeypatch.setattr("mirr.cli.probe_indexes", successful)
     runner = CliRunner()
 
     one = runner.invoke(cli, ["test", "pypi"])
@@ -174,7 +174,7 @@ def test_test_command_reports_endpoint_failure(
         index = indexes[0]
         return [ProbeResult(index.name, index.url, False, None, "TLS failure")]
 
-    monkeypatch.setattr("uim.cli.probe_indexes", failed)
+    monkeypatch.setattr("mirr.cli.probe_indexes", failed)
 
     result = CliRunner().invoke(cli, ["test", "pypi"])
 

@@ -4,8 +4,8 @@ import click
 from click.testing import CliRunner
 from conftest import IsolatedEnvironment
 
-from uim.cli import cli
-from uim.probe import ProbeResult
+from mirr.cli import cli
+from mirr.probe import ProbeResult
 
 
 def test_current_uses_nrm_shaped_sentence_for_name_url_and_verbose_provenance(
@@ -39,9 +39,9 @@ def test_current_explains_how_to_catalog_an_unknown_effective_url(
 
     assert result.exit_code == 0
     assert result.output == (
-        "Your current index(https://unknown.example/simple) is not included in the uim "
+        "Your current index(https://unknown.example/simple) is not included in the mirr "
         "indexes.\n"
-        "Use the uim add <name> <url> [home] command to add it.\n"
+        "Use the mirr add <name> <url> [home] command to add it.\n"
     )
 
 
@@ -68,7 +68,7 @@ def test_test_output_marks_current_aligns_columns_and_highlights_fastest(
             for index in indexes
         ]
 
-    monkeypatch.setattr("uim.cli.probe_indexes", deterministic)
+    monkeypatch.setattr("mirr.cli.probe_indexes", deterministic)
 
     result = CliRunner().invoke(cli, ["test"], color=True)
 
@@ -93,7 +93,7 @@ def test_single_test_marks_current_without_fastest_highlight(
         index = indexes[0]
         return [ProbeResult(index.name, index.url, True, 12.6, None)]
 
-    monkeypatch.setattr("uim.cli.probe_indexes", successful)
+    monkeypatch.setattr("mirr.cli.probe_indexes", successful)
 
     result = CliRunner().invoke(cli, ["test", "pypi"], color=True)
 

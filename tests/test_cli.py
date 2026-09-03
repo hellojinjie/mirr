@@ -6,7 +6,7 @@ import sys
 
 def run_module(*args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, "-m", "uim.cli", *args],
+        [sys.executable, "-m", "mirr.cli", *args],
         check=False,
         capture_output=True,
         text=True,
@@ -25,4 +25,4 @@ def test_version_uses_project_version() -> None:
     result = run_module("--version")
 
     assert result.returncode == 0
-    assert result.stdout.strip() == "uim, version 0.1.0"
+    assert result.stdout.strip() == "mirr, version 0.1.0"

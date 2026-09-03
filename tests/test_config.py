@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from uim.catalog import CatalogStore
-from uim.config import (
+from mirr.catalog import CatalogStore
+from mirr.config import (
     ConfigError,
     find_local_target,
     match_catalog_name,
@@ -189,7 +189,7 @@ def test_malformed_effective_config_reports_its_path(tmp_path: Path) -> None:
 
 
 def test_catalog_matching_ignores_trailing_slash_but_preserves_unknown_url(tmp_path: Path) -> None:
-    catalog = CatalogStore(tmp_path / "uim.toml").entries()
+    catalog = CatalogStore(tmp_path / "mirr.toml").entries()
 
     assert match_catalog_name("https://pypi.org/simple/", catalog) == "pypi"
     assert match_catalog_name("https://unknown.example/simple", catalog) is None

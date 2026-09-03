@@ -8,12 +8,12 @@ import pytest
 from click.testing import CliRunner
 from conftest import IsolatedEnvironment
 
-from uim.browser import BrowserError, open_index_home
-from uim.catalog import CatalogError, CatalogStore, Index, default_catalog_path
-from uim.cli import cli
-from uim.config import LocalTarget
-from uim.editor import ConfigEditorError, set_default_index
-from uim.probe import probe_index
+from mirr.browser import BrowserError, open_index_home
+from mirr.catalog import CatalogError, CatalogStore, Index, default_catalog_path
+from mirr.cli import cli
+from mirr.config import LocalTarget
+from mirr.editor import ConfigEditorError, set_default_index
+from mirr.probe import probe_index
 
 
 class RedirectResponse:
@@ -38,7 +38,7 @@ def test_catalog_rejects_invalid_port_without_writing(tmp_path: Path) -> None:
 def test_default_catalog_path_honors_isolated_xdg_home(
     isolated_env: IsolatedEnvironment,
 ) -> None:
-    assert default_catalog_path() == isolated_env.xdg_config / "uim" / "config.toml"
+    assert default_catalog_path() == isolated_env.xdg_config / "mirr" / "config.toml"
 
 
 def test_delete_protects_user_selection_even_when_project_overrides_it(
@@ -72,7 +72,7 @@ def test_delete_without_name_requires_tty_and_prompts_when_interactive(
     assert noninteractive.exit_code != 0
     assert "index name is required" in noninteractive.output
 
-    monkeypatch.setattr("uim.cli._is_interactive", lambda: True)
+    monkeypatch.setattr("mirr.cli._is_interactive", lambda: True)
     interactive = runner.invoke(cli, ["del"], input="company\n")
     assert interactive.exit_code == 0, interactive.output
     assert "Index" in interactive.output
@@ -89,7 +89,7 @@ def test_injected_temporary_write_failure_leaves_original(
     def fail_write(*args, **kwargs):
         raise OSError("injected write failure")
 
-    monkeypatch.setattr("uim.editor.tempfile.NamedTemporaryFile", fail_write)
+    monkeypatch.setattr("mirr.editor.tempfile.NamedTemporaryFile", fail_write)
 
     with pytest.raises(ConfigEditorError, match="injected write failure"):
         set_default_index(LocalTarget(path, "uv", True), "https://new.example/simple")

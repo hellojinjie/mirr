@@ -12,8 +12,8 @@ from urllib.error import HTTPError
 from urllib.parse import SplitResult, urlsplit, urlunsplit
 from urllib.request import Request, urlopen
 
-from uim import __version__
-from uim.catalog import Index
+from mirr import __version__
+from mirr.catalog import Index
 
 
 @dataclass(frozen=True)
@@ -49,7 +49,7 @@ def _project_url(index_url: str) -> str:
 def _request(url: str, method: str) -> Request:
     headers = {
         "Accept": "text/html, application/vnd.pypi.simple.v1+json",
-        "User-Agent": f"uim/{__version__}",
+        "User-Agent": f"mirr/{__version__}",
     }
     if method == "GET":
         headers["Range"] = "bytes=0-0"

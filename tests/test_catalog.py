@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from uim.catalog import BUILTIN_INDEXES, CatalogError, CatalogStore
+from mirr.catalog import BUILTIN_INDEXES, CatalogError, CatalogStore
 
 EXPECTED_BUILTINS = {
     "pypi": "https://pypi.org/simple",
@@ -23,7 +23,7 @@ def test_builtin_catalog_has_supported_https_simple_indexes() -> None:
 
 
 def test_custom_catalog_round_trip_preserves_optional_homepage(tmp_path: Path) -> None:
-    path = tmp_path / "uim" / "config.toml"
+    path = tmp_path / "mirr" / "config.toml"
     store = CatalogStore(path)
 
     store.add(

@@ -12,7 +12,7 @@ from typing import Optional
 import tomlkit
 from tomlkit.exceptions import TOMLKitError
 
-from uim.catalog import Index, normalize_url
+from mirr.catalog import Index, normalize_url
 
 
 class ConfigError(ValueError):
@@ -172,7 +172,7 @@ def resolve_effective_index(
 
 
 def managed_default_urls(*, start: Path, user_config: Optional[Path] = None) -> set[str]:
-    """Return defaults in the user and project scopes that uim can modify."""
+    """Return defaults in the user and project scopes that mirr can modify."""
 
     urls: set[str] = set()
     local = find_local_target(start)

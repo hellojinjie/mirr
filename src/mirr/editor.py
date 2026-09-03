@@ -11,7 +11,7 @@ from typing import Callable, Optional
 import tomlkit
 from tomlkit.exceptions import TOMLKitError
 
-from uim.config import LocalTarget
+from mirr.config import LocalTarget
 
 
 class ConfigEditorError(ValueError):

@@ -11,14 +11,14 @@ dependencies = [
 ]
 
 [project.scripts]
-uim = "uim.cli:cli"
+mirr = "mirr.cli:cli"
 
 [build-system]
 requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/uim"]
+packages = ["src/mirr"]
 
 [dependency-groups]
 dev = [
