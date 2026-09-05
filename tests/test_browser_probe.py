@@ -153,9 +153,11 @@ def test_test_command_reports_one_or_all_without_mutating_config(
     all_indexes = runner.invoke(cli, ["test"])
 
     assert one.exit_code == 0, one.output
-    assert one.output == "* pypi ---- 12 ms\n"
+    assert one.output == "[uv] * pypi ---- 12 ms\n"
     assert all_indexes.exit_code == 0, all_indexes.output
-    assert [line.lstrip("* ").split()[0] for line in all_indexes.output.splitlines()] == [
+    assert [
+        line.split("] ", 1)[1].lstrip("* ").split()[0] for line in all_indexes.output.splitlines()
+    ] == [
         "pypi",
         "tsinghua",
         "aliyun",

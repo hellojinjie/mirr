@@ -12,11 +12,10 @@ import pytest
 from click.testing import CliRunner
 from conftest import IsolatedEnvironment
 
+from mirr.backends.uv import ConfigEditorError, LocalTarget, set_default_index
 from mirr.browser import BrowserError, open_index_home
 from mirr.catalog import CatalogError, CatalogStore, Index, default_catalog_path
 from mirr.cli import cli
-from mirr.config import LocalTarget
-from mirr.editor import ConfigEditorError, set_default_index
 from mirr.probe import probe_index
 
 
@@ -93,7 +92,7 @@ def test_injected_temporary_write_failure_leaves_original(
     def fail_write(*args, **kwargs):
         raise OSError("injected write failure")
 
-    monkeypatch.setattr("mirr.editor.tempfile.NamedTemporaryFile", fail_write)
+    monkeypatch.setattr("mirr.backends.uv.tempfile.NamedTemporaryFile", fail_write)
 
     with pytest.raises(ConfigEditorError, match="injected write failure"):
         set_default_index(LocalTarget(path, "uv", True), "https://new.example/simple")
@@ -118,7 +117,7 @@ def test_editor_writes_disable_platform_newline_translation(
         captured.update(kwargs)
         return real_named_temporary_file(*args, **kwargs)
 
-    monkeypatch.setattr("mirr.editor.tempfile.NamedTemporaryFile", spy)
+    monkeypatch.setattr("mirr.backends.uv.tempfile.NamedTemporaryFile", spy)
     set_default_index(LocalTarget(path, "new", False), "https://pypi.org/simple")
 
     assert captured.get("newline") == ""

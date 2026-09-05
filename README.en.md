@@ -2,8 +2,9 @@
 
 [简体中文](README.md) | English
 
-`mirr` is an nrm-shaped package index manager for [uv](https://docs.astral.sh/uv/).
-It keeps the commands familiar while respecting uv's user, project, environment,
+`mirr` is an nrm-shaped mirror configuration tool for common package managers,
+currently covering [uv](https://docs.astral.sh/uv/), pip, npm, and conda (read-only).
+It keeps the commands familiar while respecting each tool's user, project, environment,
 and multi-index configuration semantics.
 
 ## Installation
@@ -47,28 +48,60 @@ The core workflows use the same command names:
 Authentication, publishing, npm scopes, and package-specific uv source bindings are
 not managed by the initial mirr release.
 
+## Multi-tool support
+
+Besides the bare historical commands (always equivalent to `mirr uv <verb>`), mirr also
+supports an explicit `mirr <tool> <verb>` form:
+
+```console
+mirr uv use tsinghua      # same as mirr use tsinghua
+mirr pip use tsinghua
+mirr pip use tsinghua --local   # writes pip.conf in the active virtualenv
+mirr npm use npmmirror
+mirr npm use npmmirror --local  # writes .npmrc in the current directory
+mirr conda ls
+mirr conda test
+```
+
+| Tool | Supported commands | `--local` scope | Notes |
+| --- | --- | --- | --- |
+| `uv` | all | project `uv.toml`/`pyproject.toml` | identical to the historical behavior |
+| `pip` | all | the active virtualenv | pip has no project-level config; `--local` errors without an active venv |
+| `npm` | all | the current directory's `.npmrc` | scope overrides (e.g. `@corp:registry=`) are always preserved |
+| `conda` | `ls`, `test` only | not applicable | channels are an ordered list, not a single default; write support is deferred, and `use`/`add`/`del`/`rename`/`current` clearly report as unsupported |
+
+`mirr <tool> --help` only lists the commands that tool currently supports.
+
 ## Quick start
 
 ```console
 $ mirr test
-* pypi -------- 187 ms
-  tsinghua ---- 43 ms
-  aliyun ------ 96 ms
-  tencent ----- 121 ms
-  huawei ------ 88 ms
-  ustc -------- 104 ms
+[uv] * pypi -------- 187 ms
+[uv]   tsinghua ---- 43 ms
+[uv]   aliyun ------ 96 ms
+[uv]   tencent ----- 121 ms
+[uv]   huawei ------ 88 ms
+[uv]   ustc -------- 104 ms
 
 $ mirr use tsinghua
-SUCCESS The index has been changed to 'tsinghua'.
+[uv] SUCCESS The index has been changed to 'tsinghua'.
 
 $ mirr current
-You are using tsinghua index.
+[uv] You are using tsinghua index.
 ```
+
+Every line carries a `[tool]` prefix stating which tool's mirror configuration it
+affects - the bare commands and `mirr uv <verb>` are the same thing, so both show `[uv]`.
 
 Run `mirr use` without a name in an interactive terminal to choose from the catalog.
 For scripts, always provide the name explicitly.
 
 ## Commands
+
+These commands are described in their bare, historical form (operating on uv); pip and
+npm behave identically in arguments and output - swap in `mirr pip <verb>` or
+`mirr npm <verb>`. The only differences are each tool's config file locations,
+environment variable names, and where `--local` writes (see the table above).
 
 ### `mirr ls`
 
@@ -166,6 +199,18 @@ User uv configuration follows uv's platform conventions, including
 `~/.config/uv/uv.toml` with XDG support on Linux and macOS and
 `%APPDATA%\uv\uv.toml` on Windows. Custom mirr entries use the platform's mirr user
 configuration directory.
+
+`mirr pip current` and `mirr npm current` follow the same "environment variable >
+nearest scope > user > system/global" shape, just with different variable names and files:
+
+| | Environment variable | Nearest scope | User-level file |
+| --- | --- | --- | --- |
+| pip | `PIP_INDEX_URL` | the active virtualenv (`$VIRTUAL_ENV/pip.conf`) | `pip.conf` (platform-specific path) |
+| npm | `npm_config_registry` | the current directory's `.npmrc` | `~/.npmrc` |
+
+Each tool's custom catalog is stored separately
+(`~/.config/mirr/{uv,pip,npm,conda}.toml`; the historical `config.toml` is kept as-is as
+uv's catalog file, no migration needed).
 
 ## Conflict recovery
 

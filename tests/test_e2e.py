@@ -19,11 +19,11 @@ def test_user_scope_catalog_and_switch_lifecycle(
 
     invoke_ok(runner, "add", "company", "https://packages.example.com/simple")
     invoke_ok(runner, "use", "company")
-    assert invoke_ok(runner, "current").output.strip() == "You are using company index."
+    assert invoke_ok(runner, "current").output.strip() == "[uv] You are using company index."
     assert "* company" in invoke_ok(runner, "ls").output
 
     invoke_ok(runner, "rename", "company", "internal")
-    assert invoke_ok(runner, "current").output.strip() == "You are using internal index."
+    assert invoke_ok(runner, "current").output.strip() == "[uv] You are using internal index."
 
     invoke_ok(runner, "use", "pypi")
     invoke_ok(runner, "del", "internal")
@@ -40,11 +40,11 @@ def test_local_scope_catalog_and_switch_lifecycle(
 
     invoke_ok(runner, "add", "company", "https://packages.example.com/simple")
     invoke_ok(runner, "use", "company", "--local")
-    assert invoke_ok(runner, "current").output.strip() == "You are using company index."
+    assert invoke_ok(runner, "current").output.strip() == "[uv] You are using company index."
     assert "* company" in invoke_ok(runner, "ls").output
 
     invoke_ok(runner, "rename", "company", "internal")
-    assert invoke_ok(runner, "current").output.strip() == "You are using internal index."
+    assert invoke_ok(runner, "current").output.strip() == "[uv] You are using internal index."
 
     invoke_ok(runner, "use", "pypi", "--local")
     invoke_ok(runner, "del", "internal")

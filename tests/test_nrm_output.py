@@ -19,13 +19,15 @@ def test_current_uses_nrm_shaped_sentence_for_name_url_and_verbose_provenance(
     url = runner.invoke(cli, ["current", "--show-url"])
     verbose = runner.invoke(cli, ["current", "--verbose"])
 
-    assert named.output == "You are using tencent index.\n"
-    assert url.output == ("You are using https://mirrors.cloud.tencent.com/pypi/simple index.\n")
+    assert named.output == "[uv] You are using tencent index.\n"
+    assert url.output == (
+        "[uv] You are using https://mirrors.cloud.tencent.com/pypi/simple index.\n"
+    )
     assert verbose.output == (
-        "You are using tencent index.\n"
-        "URL: https://mirrors.cloud.tencent.com/pypi/simple\n"
-        "Source: user:uv.toml\n"
-        f"Path: {isolated_env.user_uv_config}\n"
+        "[uv] You are using tencent index.\n"
+        "[uv] URL: https://mirrors.cloud.tencent.com/pypi/simple\n"
+        "[uv] Source: user:uv.toml\n"
+        f"[uv] Path: {isolated_env.user_uv_config}\n"
     )
 
 
@@ -39,9 +41,9 @@ def test_current_explains_how_to_catalog_an_unknown_effective_url(
 
     assert result.exit_code == 0
     assert result.output == (
-        "Your current index(https://unknown.example/simple) is not included in the mirr "
+        "[uv] Your current index(https://unknown.example/simple) is not included in the mirr "
         "indexes.\n"
-        "Use the mirr add <name> <url> [home] command to add it.\n"
+        "[uv] Use the mirr add <name> <url> [home] command to add it.\n"
     )
 
 
@@ -74,12 +76,12 @@ def test_test_output_marks_current_aligns_columns_and_highlights_fastest(
 
     assert result.exit_code == 1
     assert click.unstyle(result.output) == (
-        "* pypi -------- 100 ms\n"
-        "  tsinghua ---- 50 ms\n"
-        "  aliyun ------ TLS failure\n"
-        "  tencent ----- 201 ms\n"
-        "  huawei ------ 81 ms\n"
-        "  ustc -------- 90 ms\n"
+        "[uv] * pypi -------- 100 ms\n"
+        "[uv]   tsinghua ---- 50 ms\n"
+        "[uv]   aliyun ------ TLS failure\n"
+        "[uv]   tencent ----- 201 ms\n"
+        "[uv]   huawei ------ 81 ms\n"
+        "[uv]   ustc -------- 90 ms\n"
     )
     assert click.style("* ", fg="green", bold=True) in result.output
     assert click.style("50 ms", bg="bright_green") in result.output
@@ -98,5 +100,5 @@ def test_single_test_marks_current_without_fastest_highlight(
     result = CliRunner().invoke(cli, ["test", "pypi"], color=True)
 
     assert result.exit_code == 0
-    assert click.unstyle(result.output) == "* pypi ---- 13 ms\n"
+    assert click.unstyle(result.output) == "[uv] * pypi ---- 13 ms\n"
     assert "\x1b[102m" not in result.output

@@ -8,8 +8,7 @@ from typing import Optional
 import pytest
 import tomlkit
 
-from mirr.config import LocalTarget
-from mirr.editor import ConfigEditorError, set_default_index
+from mirr.backends.uv import ConfigEditorError, LocalTarget, set_default_index
 
 
 def test_uv_toml_switch_preserves_comments_and_supplemental_indexes(tmp_path: Path) -> None:

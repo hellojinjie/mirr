@@ -64,16 +64,82 @@ BUILTIN_INDEXES: Mapping[str, Index] = MappingProxyType(
     }
 )
 
+# pip speaks the same PEP 503 Simple Repository protocol as uv, so the exact
+# same mirror URLs work for both.
+BUILTIN_PIP_INDEXES: Mapping[str, Index] = BUILTIN_INDEXES
+
+BUILTIN_NPM_INDEXES: Mapping[str, Index] = MappingProxyType(
+    {
+        "npmjs": _builtin("npmjs", "https://registry.npmjs.org", "https://www.npmjs.com"),
+        "npmmirror": _builtin(
+            "npmmirror",
+            "https://registry.npmmirror.com",
+            "https://npmmirror.com",
+        ),
+        "tencent": _builtin(
+            "tencent",
+            "https://mirrors.cloud.tencent.com/npm/",
+            "https://mirrors.cloud.tencent.com/",
+        ),
+        "huawei": _builtin(
+            "huawei",
+            "https://repo.huaweicloud.com/repository/npm/",
+            "https://mirrors.huaweicloud.com/",
+        ),
+    }
+)
+
+BUILTIN_CONDA_INDEXES: Mapping[str, Index] = MappingProxyType(
+    {
+        "defaults": _builtin(
+            "defaults",
+            "https://repo.anaconda.com/pkgs/main",
+            "https://www.anaconda.com/",
+        ),
+        "tsinghua": _builtin(
+            "tsinghua",
+            "https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main",
+            "https://mirrors.tuna.tsinghua.edu.cn/help/anaconda/",
+        ),
+        "ustc": _builtin(
+            "ustc",
+            "https://mirrors.ustc.edu.cn/anaconda/pkgs/main",
+            "https://mirrors.ustc.edu.cn/help/anaconda.html",
+        ),
+        "huawei": _builtin(
+            "huawei",
+            "https://mirrors.huaweicloud.com/repository/conda/pkgs/main",
+            "https://mirrors.huaweicloud.com/",
+        ),
+    }
+)
+
+# Per-tool built-in catalogs.
+BUILTIN_INDEXES_BY_TOOL: Mapping[str, Mapping[str, Index]] = MappingProxyType(
+    {
+        "uv": BUILTIN_INDEXES,
+        "pip": BUILTIN_PIP_INDEXES,
+        "npm": BUILTIN_NPM_INDEXES,
+        "conda": BUILTIN_CONDA_INDEXES,
+    }
+)
+
 _NAME_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\Z")
 
 
 def default_catalog_path(
     *,
+    tool: str = "uv",
     env: Optional[Mapping[str, str]] = None,
     platform: Optional[str] = None,
     home: Optional[Path] = None,
 ) -> Path:
-    """Return the platform-appropriate mirr catalog path."""
+    """Return the platform-appropriate mirr catalog path for `tool`.
+
+    `uv`'s catalog predates the multi-tool split and keeps its historical
+    filename (`config.toml`) so existing installs need no migration; every
+    other tool gets its own `<tool>.toml` alongside it.
+    """
 
     values = os.environ if env is None else env
     target_platform = sys.platform if platform is None else platform
@@ -82,7 +148,8 @@ def default_catalog_path(
         base = Path(values.get("APPDATA", home_path / "AppData" / "Roaming"))
     else:
         base = Path(values.get("XDG_CONFIG_HOME", home_path / ".config"))
-    return base / "mirr" / "config.toml"
+    filename = "config.toml" if tool == "uv" else f"{tool}.toml"
+    return base / "mirr" / filename
 
 
 def normalize_url(url: str) -> str:
@@ -120,13 +187,17 @@ def _validate_url(url: str, *, label: str = "index URL") -> None:
 
 
 class CatalogStore:
-    """Load and persist custom entries alongside immutable built-ins."""
+    """Load and persist custom entries alongside immutable built-ins for one tool."""
 
-    def __init__(self, path: Optional[Path] = None) -> None:
-        self.path = Path(path) if path is not None else default_catalog_path()
+    def __init__(self, path: Optional[Path] = None, *, tool: str = "uv") -> None:
+        self.tool = tool
+        self.path = Path(path) if path is not None else default_catalog_path(tool=tool)
+
+    def _builtins(self) -> Mapping[str, Index]:
+        return BUILTIN_INDEXES_BY_TOOL.get(self.tool, MappingProxyType({}))
 
     def entries(self) -> dict[str, Index]:
-        entries = dict(BUILTIN_INDEXES)
+        entries = dict(self._builtins())
         entries.update(self._load_custom())
         return entries
 
@@ -142,13 +213,13 @@ class CatalogStore:
         if home is not None:
             _validate_url(home, label="homepage URL")
         custom = self._load_custom()
-        if name in BUILTIN_INDEXES or name in custom:
+        if name in self._builtins() or name in custom:
             raise CatalogError(f"index already exists: {name}")
         custom[name] = Index(name=name, url=url, home=home)
         self._write_custom(custom)
 
     def delete(self, name: str, active_urls: Collection[str] = ()) -> None:
-        if name in BUILTIN_INDEXES:
+        if name in self._builtins():
             raise CatalogError(f"cannot delete built-in index: {name}")
         custom = self._load_custom()
         if name not in custom:
@@ -160,13 +231,13 @@ class CatalogStore:
         self._write_custom(custom)
 
     def rename(self, name: str, new_name: str) -> None:
-        if name in BUILTIN_INDEXES:
+        if name in self._builtins():
             raise CatalogError(f"cannot rename built-in index: {name}")
         _validate_name(new_name)
         custom = self._load_custom()
         if name not in custom:
             raise CatalogError(f"unknown index: {name}")
-        if new_name in BUILTIN_INDEXES or new_name in custom:
+        if new_name in self._builtins() or new_name in custom:
             raise CatalogError(f"index already exists: {new_name}")
         old = custom.pop(name)
         custom[new_name] = Index(name=new_name, url=old.url, home=old.home)
@@ -198,7 +269,7 @@ class CatalogStore:
             _validate_url(url)
             if home is not None:
                 _validate_url(home, label="homepage URL")
-            if name in BUILTIN_INDEXES:
+            if name in self._builtins():
                 raise CatalogError(f"custom index shadows built-in index: {name}")
             custom[name] = Index(name=name, url=url, home=home)
         return custom
@@ -244,3 +315,11 @@ class CatalogStore:
                     temporary.unlink()
                 except FileNotFoundError:
                     pass
+
+
+def match_catalog_name(url: str, entries: Mapping[str, Index]) -> Optional[str]:
+    normalized = normalize_url(url)
+    for name, index in entries.items():
+        if normalize_url(index.url) == normalized:
+            return name
+    return None

@@ -4,15 +4,14 @@ from pathlib import Path
 
 import pytest
 
-from mirr.catalog import CatalogStore, default_catalog_path
-from mirr.config import (
+from mirr.backends.uv import (
     ConfigError,
     find_local_target,
-    match_catalog_name,
     resolve_effective_index,
     system_uv_config_paths,
     user_uv_config_path,
 )
+from mirr.catalog import CatalogStore, default_catalog_path, match_catalog_name
 
 
 def test_user_uv_config_path_uses_xdg_on_linux(tmp_path: Path) -> None:
@@ -63,6 +62,31 @@ def test_default_catalog_path_uses_appdata_on_windows(tmp_path: Path) -> None:
         platform="win32",
         home=tmp_path / "home",
     ) == (tmp_path / "appdata" / "mirr" / "config.toml")
+
+
+def test_default_catalog_path_uv_keeps_historical_filename(tmp_path: Path) -> None:
+    kwargs = {
+        "env": {"XDG_CONFIG_HOME": str(tmp_path / "xdg")},
+        "platform": "linux",
+        "home": tmp_path / "home",
+    }
+
+    # tool="uv" must resolve to the pre-multi-tool path (config.toml), byte
+    # for byte the same as calling with no tool at all, so existing installs
+    # need no migration.
+    assert default_catalog_path(tool="uv", **kwargs) == default_catalog_path(**kwargs)
+    assert default_catalog_path(tool="uv", **kwargs) == (
+        tmp_path / "xdg" / "mirr" / "config.toml"
+    )
+
+
+def test_default_catalog_path_other_tools_get_their_own_file(tmp_path: Path) -> None:
+    assert default_catalog_path(
+        tool="npm",
+        env={"XDG_CONFIG_HOME": str(tmp_path / "xdg")},
+        platform="linux",
+        home=tmp_path / "home",
+    ) == (tmp_path / "xdg" / "mirr" / "npm.toml")
 
 
 def test_system_uv_paths_prefer_xdg_directories_before_etc(tmp_path: Path) -> None:

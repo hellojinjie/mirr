@@ -2,8 +2,9 @@
 
 简体中文 | [English](README.en.md)
 
-`mirr` 是一个仿照 nrm 风格设计的 [uv](https://docs.astral.sh/uv/) 包索引管理器。
-它保留了熟悉的命令形式,同时尊重 uv 在用户级、项目级、环境变量及多索引配置上的语义。
+`mirr` 是一个仿照 nrm 风格设计的常用包管理器镜像配置工具,目前支持
+[uv](https://docs.astral.sh/uv/)、pip、npm 和 conda(只读)。
+它保留了熟悉的命令形式,同时尊重每个工具在用户级、项目级、环境变量及多索引配置上的语义。
 
 ## 安装
 
@@ -45,28 +46,59 @@ mirr --version
 
 认证、发布、npm scope,以及针对特定包的 uv source 绑定,目前初始版本的 mirr 尚未涉及。
 
+## 多工具支持
+
+除了不带前缀的历史命令(始终等价于 `mirr uv <verb>`),mirr 也支持显式的
+`mirr <tool> <verb>` 形式:
+
+```console
+mirr uv use tsinghua      # 等价于 mirr use tsinghua
+mirr pip use tsinghua
+mirr pip use tsinghua --local   # 写入当前激活 virtualenv 的 pip.conf
+mirr npm use npmmirror
+mirr npm use npmmirror --local  # 写入当前目录的 .npmrc
+mirr conda ls
+mirr conda test
+```
+
+| 工具 | 支持的命令 | `--local` 作用域 | 说明 |
+| --- | --- | --- | --- |
+| `uv` | 全部 | 项目 `uv.toml`/`pyproject.toml` | 与历史行为完全一致 |
+| `pip` | 全部 | 当前激活的 virtualenv | pip 没有项目级配置;未激活 venv 时 `--local` 会报错 |
+| `npm` | 全部 | 当前目录的 `.npmrc` | scope 覆盖条目(如 `@corp:registry=`)始终保留 |
+| `conda` | 仅 `ls`、`test` | 不适用 | channel 是有序列表而非单一默认值,写入语义留待后续版本;`use`/`add`/`del`/`rename`/`current` 会明确报告暂不支持 |
+
+`mirr <tool> --help` 只会列出该工具当前实际支持的命令。
+
 ## 快速开始
 
 ```console
 $ mirr test
-* pypi -------- 187 ms
-  tsinghua ---- 43 ms
-  aliyun ------ 96 ms
-  tencent ----- 121 ms
-  huawei ------ 88 ms
-  ustc -------- 104 ms
+[uv] * pypi -------- 187 ms
+[uv]   tsinghua ---- 43 ms
+[uv]   aliyun ------ 96 ms
+[uv]   tencent ----- 121 ms
+[uv]   huawei ------ 88 ms
+[uv]   ustc -------- 104 ms
 
 $ mirr use tsinghua
-SUCCESS The index has been changed to 'tsinghua'.
+[uv] SUCCESS The index has been changed to 'tsinghua'.
 
 $ mirr current
-You are using tsinghua index.
+[uv] You are using tsinghua index.
 ```
+
+每条输出都带着 `[tool]` 前缀,标明这次改动的是哪个工具的镜像配置——
+无前缀命令和 `mirr uv <verb>` 一样,都会显示 `[uv]`。
 
 在交互式终端中不带名称执行 `mirr use` 可以从目录列表中选择;
 在脚本中请始终显式指定名称。
 
 ## 命令
+
+以下命令以不带前缀的历史形式(操作 uv)描述;pip 和 npm 的行为、参数与输出格式相同,
+只需把命令换成 `mirr pip <verb>` 或 `mirr npm <verb>`,唯一的区别是各自的配置文件位置、
+环境变量名称,以及 `--local` 的作用域(见上表)。
 
 ### `mirr ls`
 
@@ -156,6 +188,17 @@ mirr 会改为发起请求并只读取最多一个字节。批量测试所有条
 用户级 uv 配置遵循 uv 的平台约定,包括 Linux 和 macOS 上支持 XDG 的
 `~/.config/uv/uv.toml`,以及 Windows 上的 `%APPDATA%\uv\uv.toml`。
 mirr 的自定义条目则使用对应平台上 mirr 自身的用户配置目录。
+
+`mirr pip current` 和 `mirr npm current` 遵循同样的"环境变量 > 就近作用域 > 用户 >
+系统/全局"结构,只是变量名称和文件不同:
+
+| | 环境变量 | 就近作用域 | 用户级文件 |
+| --- | --- | --- | --- |
+| pip | `PIP_INDEX_URL` | 当前激活的 virtualenv (`$VIRTUAL_ENV/pip.conf`) | `pip.conf`(平台相关路径) |
+| npm | `npm_config_registry` | 当前目录的 `.npmrc` | `~/.npmrc` |
+
+每个工具的自定义目录各自独立存放(`~/.config/mirr/{uv,pip,npm,conda}.toml`,历史的
+`config.toml` 原样保留作为 uv 的目录文件,无需迁移)。
 
 ## 冲突恢复
 

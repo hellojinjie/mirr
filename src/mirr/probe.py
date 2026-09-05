@@ -40,7 +40,13 @@ def _redact_error(message: str) -> str:
     return re.sub(r"https?://[^\s]+", replace, message)
 
 
-def _project_url(index_url: str) -> str:
+def simple_repository_probe_url(index_url: str) -> str:
+    """Lightweight PEP 503 Simple Repository project endpoint to probe.
+
+    Shared by the uv and pip backends, which both speak this protocol; other
+    backends supply their own `build_probe_url` to `probe_index`/`probe_indexes`.
+    """
+
     parts = urlsplit(index_url)
     path = f"{parts.path.rstrip('/')}/pip/"
     return urlunsplit(SplitResult(parts.scheme, parts.netloc, path, parts.query, parts.fragment))
@@ -69,10 +75,11 @@ def probe_index(
     index: Index,
     timeout: float = 5.0,
     *,
+    build_probe_url: Callable[[str], str] = simple_repository_probe_url,
     opener: Callable[..., object] = urlopen,
     clock: Callable[[], float] = time.monotonic,
 ) -> ProbeResult:
-    probe_url = _project_url(index.url)
+    probe_url = build_probe_url(index.url)
     started = clock()
     try:
         use_get = False

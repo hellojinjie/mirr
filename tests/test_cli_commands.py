@@ -207,9 +207,10 @@ def test_current_reports_name_url_and_provenance(isolated_env: IsolatedEnvironme
     url = runner.invoke(cli, ["current", "-u"])
     verbose = runner.invoke(cli, ["current", "--verbose"])
 
-    assert named.output.strip() == "You are using tencent index."
+    assert named.output.strip() == "[uv] You are using tencent index."
     assert (
-        url.output.strip() == "You are using https://mirrors.cloud.tencent.com/pypi/simple index."
+        url.output.strip()
+        == "[uv] You are using https://mirrors.cloud.tencent.com/pypi/simple index."
     )
     assert "tencent" in verbose.output
     assert "user:uv.toml" in verbose.output
@@ -232,12 +233,12 @@ def test_ls_marks_only_effective_catalog_entry(isolated_env: IsolatedEnvironment
 
     assert result.exit_code == 0
     assert result.output == (
-        "* pypi     --- https://pypi.org/simple\n"
-        "  tsinghua --- https://pypi.tuna.tsinghua.edu.cn/simple\n"
-        "  aliyun   --- https://mirrors.aliyun.com/pypi/simple\n"
-        "  tencent  --- https://mirrors.cloud.tencent.com/pypi/simple\n"
-        "  huawei   --- https://repo.huaweicloud.com/repository/pypi/simple\n"
-        "  ustc     --- https://mirrors.ustc.edu.cn/pypi/simple\n"
+        "[uv] * pypi     --- https://pypi.org/simple\n"
+        "[uv]   tsinghua --- https://pypi.tuna.tsinghua.edu.cn/simple\n"
+        "[uv]   aliyun   --- https://mirrors.aliyun.com/pypi/simple\n"
+        "[uv]   tencent  --- https://mirrors.cloud.tencent.com/pypi/simple\n"
+        "[uv]   huawei   --- https://repo.huaweicloud.com/repository/pypi/simple\n"
+        "[uv]   ustc     --- https://mirrors.ustc.edu.cn/pypi/simple\n"
     )
 
 

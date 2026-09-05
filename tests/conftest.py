@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
+from mirr.backends.uv import user_uv_config_path
 from mirr.catalog import default_catalog_path
-from mirr.config import user_uv_config_path
 
 
 @dataclass(frozen=True)
