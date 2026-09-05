@@ -5,6 +5,8 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
+from mirr.backends.npm import user_npmrc_path
+from mirr.backends.pip import user_pip_config_path
 from mirr.cli import _ALL_VERBS, SUPPORTED_TOOLS, cli
 
 
@@ -104,10 +106,12 @@ def test_conda_ls_lists_builtins_without_marking_current(tmp_path: Path) -> None
 def test_pip_use_and_current_round_trip(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     home = tmp_path / "home"
     xdg = tmp_path / "xdg"
-    for path in (home, xdg):
+    appdata = tmp_path / "appdata"
+    for path in (home, xdg, appdata):
         path.mkdir()
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg))
+    monkeypatch.setenv("APPDATA", str(appdata))
     monkeypatch.delenv("VIRTUAL_ENV", raising=False)
     monkeypatch.delenv("PIP_INDEX_URL", raising=False)
     monkeypatch.chdir(tmp_path)
@@ -116,7 +120,7 @@ def test_pip_use_and_current_round_trip(tmp_path: Path, monkeypatch: pytest.Monk
     use_result = runner.invoke(cli, ["pip", "use", "tsinghua"])
     assert use_result.exit_code == 0, use_result.output
 
-    pip_conf = xdg / "pip" / "pip.conf"
+    pip_conf = user_pip_config_path()
     assert "index-url = https://pypi.tuna.tsinghua.edu.cn/simple" in pip_conf.read_text(
         encoding="utf-8"
     )
@@ -158,8 +162,9 @@ def test_npm_ls_marks_current_selection(tmp_path: Path, monkeypatch: pytest.Monk
     home.mkdir()
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.delenv("npm_config_registry", raising=False)
+    monkeypatch.setenv("npm_config_userconfig", str(home / ".npmrc"))
     monkeypatch.chdir(tmp_path)
-    (home / ".npmrc").write_text("registry=https://registry.npmmirror.com\n", encoding="utf-8")
+    user_npmrc_path().write_text("registry=https://registry.npmmirror.com\n", encoding="utf-8")
 
     result = CliRunner().invoke(cli, ["npm", "ls"])
 

@@ -157,11 +157,13 @@ def test_managed_default_urls_covers_project_and_user_scopes(tmp_path: Path, mon
     home = tmp_path / "home"
     project = tmp_path / "project"
     project.mkdir()
+    home.mkdir()
+    user_npmrc = home / ".npmrc"
     monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("npm_config_userconfig", str(user_npmrc))
     monkeypatch.chdir(project)
     (project / ".npmrc").write_text("registry=https://project.example\n", encoding="utf-8")
-    home.mkdir()
-    (home / ".npmrc").write_text("registry=https://user.example\n", encoding="utf-8")
+    user_npmrc.write_text("registry=https://user.example\n", encoding="utf-8")
 
     assert managed_default_urls(start=project) == {
         "https://project.example",

@@ -3,6 +3,7 @@ from __future__ import annotations
 import configparser
 import os
 import stat
+import sys
 from pathlib import Path
 
 import pytest
@@ -79,7 +80,8 @@ def test_find_local_target_uses_active_virtualenv(tmp_path: Path) -> None:
 def test_effective_index_precedence_environment_venv_user_system(tmp_path: Path) -> None:
     venv = tmp_path / "venv"
     venv.mkdir()
-    (venv / "pip.conf").write_text(
+    venv_config = venv_pip_config_path(venv, platform=sys.platform)
+    venv_config.write_text(
         "[global]\nindex-url = https://venv.example/simple\n", encoding="utf-8"
     )
     user = tmp_path / "user" / "pip.conf"
@@ -109,7 +111,7 @@ def test_effective_index_precedence_environment_venv_user_system(tmp_path: Path)
     assert (effective.url, effective.source, effective.path) == (
         "https://venv.example/simple",
         "venv:pip.conf",
-        venv / "pip.conf",
+        venv_config,
     )
 
     effective = resolve_effective_index(
@@ -210,15 +212,18 @@ def test_set_default_index_writes_atomically_and_preserves_permissions(tmp_path:
 def test_managed_default_urls_covers_venv_and_user_scopes(tmp_path: Path, monkeypatch) -> None:
     home = tmp_path / "home"
     xdg = tmp_path / "xdg"
+    appdata = tmp_path / "appdata"
     venv = tmp_path / "venv"
     venv.mkdir()
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg))
+    monkeypatch.setenv("APPDATA", str(appdata))
     monkeypatch.setenv("VIRTUAL_ENV", str(venv))
-    (venv / "pip.conf").write_text(
+    venv_config = venv_pip_config_path(venv, platform=sys.platform)
+    venv_config.write_text(
         "[global]\nindex-url = https://venv.example/simple\n", encoding="utf-8"
     )
-    user_path = xdg / "pip" / "pip.conf"
+    user_path = user_pip_config_path()
     user_path.parent.mkdir(parents=True)
     user_path.write_text(
         "[global]\nindex-url = https://user.example/simple\n", encoding="utf-8"
@@ -248,8 +253,9 @@ def test_pip_backend_build_probe_request_reuses_simple_repository_endpoint() -> 
 def test_pip_backend_locate_targets_uses_user_scope_when_not_local(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
+    monkeypatch.setenv("APPDATA", str(tmp_path / "appdata"))
 
     target = PipBackend().locate_targets(local=False, start=tmp_path)
 
-    assert target.path == tmp_path / "xdg" / "pip" / "pip.conf"
+    assert target.path == user_pip_config_path()
     assert target.kind == "pip-user"
