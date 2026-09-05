@@ -45,7 +45,7 @@ def test_probe_uses_head_on_lightweight_project_endpoint() -> None:
     request, timeout = requests[0]
     assert request.full_url == "https://pypi.example/simple/pip/"
     assert request.get_method() == "HEAD"
-    assert request.get_header("User-agent") == "mirr/0.1.1"
+    assert request.get_header("User-agent") == "mirr/0.2.0"
     assert timeout == 5.0
     assert response.read_sizes == []
 
@@ -78,7 +78,7 @@ def test_probe_falls_back_to_one_byte_ranged_get_when_head_is_unsupported(
     ]
     assert [request.get_method() for request in requests] == ["HEAD", "GET"]
     assert requests[1].get_header("Range") == "bytes=0-0"
-    assert requests[1].get_header("User-agent") == "mirr/0.1.1"
+    assert requests[1].get_header("User-agent") == "mirr/0.2.0"
     assert response.read_sizes == [1]
 
 
