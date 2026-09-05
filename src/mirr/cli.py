@@ -280,7 +280,13 @@ def _build_tool_group(tool: str, backend: Backend) -> click.Group:
 
 
 class _MirrGroup(click.Group):
-    """Top-level group that reports unknown tools with the supported-tool list."""
+    """Top-level group that reports unknown tools with the supported-tool list.
+
+    Also renders `--help` so the package-tool slot is discoverable without a
+    follow-up command: the `Usage:` line names it explicitly, and the command
+    listing splits tool entry points from the historical bare-verb aliases
+    instead of one flat alphabetical list (see design.md, Decisions).
+    """
 
     def resolve_command(self, ctx: click.Context, args: list[str]):
         try:
@@ -295,8 +301,48 @@ class _MirrGroup(click.Group):
                 ) from exc
             raise
 
+    def format_commands(self, ctx: click.Context, formatter: click.HelpFormatter) -> None:
+        tool_rows: list[tuple[str, click.Command]] = []
+        alias_rows: list[tuple[str, click.Command]] = []
+        for name in self.list_commands(ctx):
+            command = self.get_command(ctx, name)
+            if command is None or command.hidden:
+                continue
+            (tool_rows if name in SUPPORTED_TOOLS else alias_rows).append((name, command))
 
-@click.group(cls=_MirrGroup, context_settings={"help_option_names": ["-h", "--help"]})
+        if not tool_rows and not alias_rows:
+            return
+        limit = formatter.width - 6 - max(
+            len(name) for name, _ in (*tool_rows, *alias_rows)
+        )
+
+        if tool_rows:
+            with formatter.section(
+                "Package tools (uv is the default when [PACKAGE TOOL] is omitted)"
+            ):
+                formatter.write_dl(
+                    [(name, command.get_short_help_str(limit)) for name, command in tool_rows]
+                )
+        if alias_rows:
+            with formatter.section("Commands"):
+                formatter.write_dl(
+                    [(name, command.get_short_help_str(limit)) for name, command in alias_rows]
+                )
+
+
+_HELP_EPILOG = (
+    "Supported package tools: uv, pip, npm, conda.\n\n"
+    "Run `mirr <tool> --help` to see a tool's supported commands "
+    "(conda currently only supports ls/test)."
+)
+
+
+@click.group(
+    cls=_MirrGroup,
+    context_settings={"help_option_names": ["-h", "--help"]},
+    subcommand_metavar="[PACKAGE TOOL] COMMAND [ARGS]...",
+    epilog=_HELP_EPILOG,
+)
 @click.version_option(__version__, prog_name="mirr")
 def cli() -> None:
     """Manage package indexes for uv, pip, npm, and conda."""

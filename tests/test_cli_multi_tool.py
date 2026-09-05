@@ -33,6 +33,43 @@ def test_conda_help_lists_only_ls_and_test() -> None:
         assert hidden_verb not in result.output
 
 
+def test_top_level_help_names_the_package_tool_slot_in_usage() -> None:
+    result = CliRunner().invoke(cli, ["--help"], prog_name="mirr")
+
+    assert result.exit_code == 0, result.output
+    assert result.output.splitlines()[0] == (
+        "Usage: mirr [OPTIONS] [PACKAGE TOOL] COMMAND [ARGS]..."
+    )
+
+
+def test_top_level_help_groups_tools_and_aliases_separately() -> None:
+    result = CliRunner().invoke(cli, ["--help"], prog_name="mirr")
+
+    assert result.exit_code == 0, result.output
+    assert (
+        "Package tools (uv is the default when [PACKAGE TOOL] is omitted):\n"
+        "  conda  Manage conda package indexes.\n"
+        "  npm    Manage npm package indexes.\n"
+        "  pip    Manage pip package indexes.\n"
+        "  uv     Manage uv package indexes.\n"
+    ) in result.output
+    assert (
+        "Commands:\n"
+        "  add      Add a custom index.\n"
+        "  current  Show the current index name or URL.\n"
+        "  del      Delete a custom index.\n"
+        "  home     Open an index homepage.\n"
+        "  ls       List all indexes.\n"
+        "  rename   Rename a custom index.\n"
+        "  test     Test index reachability.\n"
+        "  use      Change the current index.\n"
+    ) in result.output
+    assert "Supported package tools: uv, pip, npm, conda." in result.output
+    assert "mirr <tool> --help" in result.output
+    assert "conda currently" in result.output
+    assert "only supports ls/test" in result.output
+
+
 @pytest.mark.parametrize(
     ("args", "match_all"),
     [
