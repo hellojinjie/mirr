@@ -218,7 +218,7 @@ def test_managed_default_urls_covers_venv_and_user_scopes(tmp_path: Path, monkey
     (venv / "pip.conf").write_text(
         "[global]\nindex-url = https://venv.example/simple\n", encoding="utf-8"
     )
-    user_path = xdg / "pip" / "pip.conf"
+    user_path = user_pip_config_path(home=home)
     user_path.parent.mkdir(parents=True)
     user_path.write_text(
         "[global]\nindex-url = https://user.example/simple\n", encoding="utf-8"
@@ -246,10 +246,11 @@ def test_pip_backend_build_probe_request_reuses_simple_repository_endpoint() -> 
 
 
 def test_pip_backend_locate_targets_uses_user_scope_when_not_local(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
 
     target = PipBackend().locate_targets(local=False, start=tmp_path)
 
-    assert target.path == tmp_path / "xdg" / "pip" / "pip.conf"
+    assert target.path == user_pip_config_path(home=home)
     assert target.kind == "pip-user"

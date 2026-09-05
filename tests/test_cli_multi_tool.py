@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
+from mirr.backends.pip import user_pip_config_path
 from mirr.cli import _ALL_VERBS, SUPPORTED_TOOLS, cli
 
 
@@ -116,7 +117,7 @@ def test_pip_use_and_current_round_trip(tmp_path: Path, monkeypatch: pytest.Monk
     use_result = runner.invoke(cli, ["pip", "use", "tsinghua"])
     assert use_result.exit_code == 0, use_result.output
 
-    pip_conf = xdg / "pip" / "pip.conf"
+    pip_conf = user_pip_config_path(home=home)
     assert "index-url = https://pypi.tuna.tsinghua.edu.cn/simple" in pip_conf.read_text(
         encoding="utf-8"
     )
