@@ -25,4 +25,4 @@ def test_version_uses_project_version() -> None:
     result = run_module("--version")
 
     assert result.returncode == 0
-    assert result.stdout.strip() == "mirr, version 0.2.0"
+    assert result.stdout.strip() == "mirr, version 0.2.1"
