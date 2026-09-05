@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import pytest
@@ -102,6 +103,9 @@ def test_conda_ls_lists_builtins_without_marking_current(tmp_path: Path) -> None
 
 
 def test_pip_use_and_current_round_trip(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # pip's user-config path resolution reads the real sys.platform when not
+    # overridden; pin it so this XDG-path assertion is OS-independent.
+    monkeypatch.setattr(sys, "platform", "linux")
     home = tmp_path / "home"
     xdg = tmp_path / "xdg"
     for path in (home, xdg):

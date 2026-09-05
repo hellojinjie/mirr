@@ -3,6 +3,7 @@ from __future__ import annotations
 import configparser
 import os
 import stat
+import sys
 from pathlib import Path
 
 import pytest
@@ -76,7 +77,14 @@ def test_find_local_target_uses_active_virtualenv(tmp_path: Path) -> None:
     assert not target.exists
 
 
-def test_effective_index_precedence_environment_venv_user_system(tmp_path: Path) -> None:
+def test_effective_index_precedence_environment_venv_user_system(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # venv_pip_config_path() reads the real sys.platform when no override is
+    # passed through (there's no venv_config override param, unlike
+    # user_config/system_configs) - pin it so this test is OS-independent.
+    monkeypatch.setattr(sys, "platform", "linux")
+
     venv = tmp_path / "venv"
     venv.mkdir()
     (venv / "pip.conf").write_text(
@@ -208,6 +216,11 @@ def test_set_default_index_writes_atomically_and_preserves_permissions(tmp_path:
 
 
 def test_managed_default_urls_covers_venv_and_user_scopes(tmp_path: Path, monkeypatch) -> None:
+    # user_pip_config_path()/venv_pip_config_path() read the real sys.platform
+    # when called with no override (neither is exposed through this function's
+    # signature) - pin it so this test is OS-independent.
+    monkeypatch.setattr(sys, "platform", "linux")
+
     home = tmp_path / "home"
     xdg = tmp_path / "xdg"
     venv = tmp_path / "venv"
@@ -246,6 +259,9 @@ def test_pip_backend_build_probe_request_reuses_simple_repository_endpoint() -> 
 
 
 def test_pip_backend_locate_targets_uses_user_scope_when_not_local(tmp_path: Path, monkeypatch) -> None:
+    # user_pip_config_path() reads the real sys.platform when locate_targets()
+    # calls it with no override - pin it so this test is OS-independent.
+    monkeypatch.setattr(sys, "platform", "linux")
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
 
