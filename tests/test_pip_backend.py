@@ -32,10 +32,29 @@ def test_user_pip_config_path_uses_xdg_on_linux(tmp_path: Path) -> None:
     ) == (tmp_path / "xdg" / "pip" / "pip.conf")
 
 
-def test_user_pip_config_path_uses_application_support_on_macos(tmp_path: Path) -> None:
-    assert user_pip_config_path(env={}, platform="darwin", home=tmp_path / "home") == (
-        tmp_path / "home" / "Library" / "Application Support" / "pip" / "pip.conf"
+def test_user_pip_config_path_uses_application_support_on_macos_when_it_exists(
+    tmp_path: Path,
+) -> None:
+    home = tmp_path / "home"
+    (home / "Library" / "Application Support" / "pip").mkdir(parents=True)
+
+    assert user_pip_config_path(env={}, platform="darwin", home=home) == (
+        home / "Library" / "Application Support" / "pip" / "pip.conf"
     )
+
+
+def test_user_pip_config_path_falls_back_to_config_on_macos_when_application_support_is_absent(
+    tmp_path: Path,
+) -> None:
+    # Matches real pip (pip._internal.utils.appdirs._macos_user_config_dir):
+    # Application Support is only used when it already exists; the fallback
+    # is a hardcoded ~/.config, not honoring $XDG_CONFIG_HOME either.
+    home = tmp_path / "home"
+    home.mkdir()
+
+    assert user_pip_config_path(
+        env={"XDG_CONFIG_HOME": str(tmp_path / "xdg")}, platform="darwin", home=home
+    ) == (home / ".config" / "pip" / "pip.conf")
 
 
 def test_user_pip_config_path_uses_appdata_and_ini_on_windows(tmp_path: Path) -> None:

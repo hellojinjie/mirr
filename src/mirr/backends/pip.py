@@ -42,7 +42,14 @@ def user_pip_config_path(
         base = Path(values.get("APPDATA", home_path / "AppData" / "Roaming"))
         return base / "pip" / "pip.ini"
     if target_platform == "darwin":
-        return home_path / "Library" / "Application Support" / "pip" / "pip.conf"
+        # pip itself only uses Application Support when that directory
+        # already exists, otherwise it falls back to a hardcoded ~/.config
+        # (not honoring $XDG_CONFIG_HOME even on this fallback) - see
+        # pip._internal.utils.appdirs._macos_user_config_dir.
+        app_support = home_path / "Library" / "Application Support" / "pip"
+        if app_support.is_dir():
+            return app_support / "pip.conf"
+        return home_path / ".config" / "pip" / "pip.conf"
     base = Path(values.get("XDG_CONFIG_HOME", home_path / ".config"))
     return base / "pip" / "pip.conf"
 
