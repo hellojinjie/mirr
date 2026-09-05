@@ -158,6 +158,10 @@ def test_managed_default_urls_covers_project_and_user_scopes(tmp_path: Path, mon
     project = tmp_path / "project"
     project.mkdir()
     monkeypatch.setenv("HOME", str(home))
+    # pathlib.Path.home() on real Windows reads USERPROFILE, not HOME - set
+    # both so this test is correct on every OS (harmless on POSIX, where
+    # USERPROFILE is simply ignored).
+    monkeypatch.setenv("USERPROFILE", str(home))
     monkeypatch.chdir(project)
     (project / ".npmrc").write_text("registry=https://project.example\n", encoding="utf-8")
     home.mkdir()

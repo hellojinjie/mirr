@@ -161,6 +161,10 @@ def test_npm_ls_marks_current_selection(tmp_path: Path, monkeypatch: pytest.Monk
     home = tmp_path / "home"
     home.mkdir()
     monkeypatch.setenv("HOME", str(home))
+    # pathlib.Path.home() on real Windows reads USERPROFILE, not HOME - set
+    # both so this test is correct on every OS (harmless on POSIX, where
+    # USERPROFILE is simply ignored).
+    monkeypatch.setenv("USERPROFILE", str(home))
     monkeypatch.delenv("npm_config_registry", raising=False)
     monkeypatch.chdir(tmp_path)
     (home / ".npmrc").write_text("registry=https://registry.npmmirror.com\n", encoding="utf-8")
