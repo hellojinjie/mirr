@@ -1,57 +1,72 @@
-# `mirr`or
+# mirr
 
-[简体中文](README.md) | English
+[GitHub](https://github.com/hellojinjie/mirr) | [简体中文](README.md) | English
 
-`mirr` is an nrm-shaped mirror configuration tool for common package managers,
-currently covering [uv](https://docs.astral.sh/uv/), pip, npm, and conda (read-only).
-It keeps the commands familiar while respecting each tool's user, project, environment,
-and multi-index configuration semantics.
+Default package sources (PyPI, the npm registry, etc.) can be slow or flaky on some
+networks, so many people switch to a mirror - but uv, pip, npm, and conda each configure
+mirrors differently.
+
+`mirr` (short for "mirror", styled after [nrm](https://github.com/Pana/nrm)'s command
+shape) manages
+mirror/index configuration for these tools through one consistent set of commands
+(`ls`/`use`/`add`/`del`/`rename`/`home`/`test`/`current`), currently covering
+[uv](https://docs.astral.sh/uv/), pip, npm, and conda (read-only), while respecting each
+tool's own user, project, environment, and multi-index configuration semantics.
+
+## Quick start
+
+Requires Python 3.9 or later.
+
+```console
+$ uv tool install mirr
+```
+
+### Test uv's mirrors and switch to the fastest one
+
+```console
+$ mirr uv test
+[uv] * pypi -------- 187 ms
+[uv]   tsinghua ---- 43 ms
+[uv]   aliyun ------ 96 ms
+[uv]   tencent ----- 121 ms
+[uv]   huawei ------ 88 ms
+[uv]   ustc -------- 104 ms
+
+$ mirr uv use tsinghua
+[uv] SUCCESS The index has been changed to 'tsinghua'.
+
+$ mirr uv current
+[uv] You are using tsinghua index.
+```
+
+Every line carries a `[tool]` prefix stating which tool's mirror configuration it
+affects (the `uv` above can also be dropped - see "Multi-tool support" below).
+
+Run `mirr use` without a name in an interactive terminal to choose from the catalog.
+For scripts, always provide the name explicitly.
 
 ## Installation
 
-mirr requires Python 3.9 or later. Run it directly with [`uvx`](https://docs.astral.sh/uv/guides/tools/), no install needed:
+mirr itself is a Python command-line tool - whether you mainly use pip, npm, or conda,
+you only need to install mirr once (as above, or with `pip install mirr`), and managing
+mirrors for those tools needs nothing further.
+
+Prefer not to install anything? Run it on the fly with
+[`uvx`](https://docs.astral.sh/uv/guides/tools/) by swapping in `uvx mirr ...`. From a
+checkout, for development:
 
 ```console
-uvx mirr --version
-```
-
-Or install it as a persistent command:
-
-```console
-uv tool install mirr
-mirr --version
-```
-
-From a checkout, for development:
-
-```console
+git clone https://github.com/hellojinjie/mirr
+cd mirr
 uv tool install .
 mirr --version
 ```
 
-## Migrating from nrm
+## Multi-tool support (uv / pip / npm / conda)
 
-The core workflows use the same command names:
-
-| nrm | mirr | Purpose |
-| --- | --- | --- |
-| `nrm ls` | `mirr ls` | List indexes and mark the effective one |
-| `nrm current -u` | `mirr current -u` | Show the effective index URL |
-| `nrm use <name>` | `mirr use <name>` | Change the user-level default |
-| `nrm use <name> --local` | `mirr use <name> --local` | Change the project default |
-| `nrm add <name> <url> [home]` | `mirr add <name> <url> [home]` | Add a custom index |
-| `nrm del <name>` | `mirr del <name>` | Delete a custom index |
-| `nrm rename <name> <new-name>` | `mirr rename <name> <new-name>` | Rename a custom index |
-| `nrm home <name> [browser]` | `mirr home <name> [browser]` | Open an index homepage |
-| `nrm test [name]` | `mirr test [name]` | Measure endpoint latency |
-
-Authentication, publishing, npm scopes, and package-specific uv source bindings are
-not managed by the initial mirr release.
-
-## Multi-tool support
-
-Besides the bare historical commands (always equivalent to `mirr uv <verb>`), mirr also
-supports an explicit `mirr <tool> <verb>` form:
+Commands default to operating on uv - the bare form is always equivalent to
+`mirr uv <verb>` - and mirr also supports an explicit `mirr <tool> <verb>` form to
+target pip, npm, or conda:
 
 ```console
 mirr uv use tsinghua      # same as mirr use tsinghua
@@ -65,52 +80,42 @@ mirr conda test
 
 | Tool | Supported commands | `--local` scope | Notes |
 | --- | --- | --- | --- |
-| `uv` | all | project `uv.toml`/`pyproject.toml` | identical to the historical behavior |
+| `uv` | all | project `uv.toml`/`pyproject.toml` | identical to the bare (no-prefix) commands |
 | `pip` | all | the active virtualenv | pip has no project-level config; `--local` errors without an active venv |
 | `npm` | all | the current directory's `.npmrc` | scope overrides (e.g. `@corp:registry=`) are always preserved |
-| `conda` | `ls`, `test` only | not applicable | channels are an ordered list, not a single default; write support is deferred, and `use`/`add`/`del`/`rename`/`current` clearly report as unsupported |
+| `conda` | `ls`, `test` only | not applicable | channels are an ordered list, not a single default; write support is deferred, and `use`/`add`/`del`/`rename`/`current`/`home` clearly report as unsupported |
 
 `mirr <tool> --help` only lists the commands that tool currently supports.
 
-## Quick start
-
-```console
-$ mirr test
-[uv] * pypi -------- 187 ms
-[uv]   tsinghua ---- 43 ms
-[uv]   aliyun ------ 96 ms
-[uv]   tencent ----- 121 ms
-[uv]   huawei ------ 88 ms
-[uv]   ustc -------- 104 ms
-
-$ mirr use tsinghua
-[uv] SUCCESS The index has been changed to 'tsinghua'.
-
-$ mirr current
-[uv] You are using tsinghua index.
-```
-
-Every line carries a `[tool]` prefix stating which tool's mirror configuration it
-affects - the bare commands and `mirr uv <verb>` are the same thing, so both show `[uv]`.
-
-Run `mirr use` without a name in an interactive terminal to choose from the catalog.
-For scripts, always provide the name explicitly.
+Authentication, publishing, npm scopes, and package-specific uv source bindings are
+not managed by the initial mirr release.
 
 ## Commands
 
-These commands are described in their bare, historical form (operating on uv); pip and
-npm behave identically in arguments and output - swap in `mirr pip <verb>` or
-`mirr npm <verb>`. The only differences are each tool's config file locations,
-environment variable names, and where `--local` writes (see the table above).
+These commands are described in their bare form (operating on uv by default); pip and
+npm take the same arguments and produce the same output format - swap in `mirr pip <verb>`
+or `mirr npm <verb>`. The differences are each tool's config file locations, environment
+variable names, `--local`'s scope (see the table above), and how `mirr test` builds its
+probe request (see that section).
 
 ### `mirr ls`
+
+```console
+$ mirr uv ls
+[uv]   pypi     --- https://pypi.org/simple
+[uv] * tsinghua --- https://pypi.tuna.tsinghua.edu.cn/simple
+[uv]   aliyun   --- https://mirrors.aliyun.com/pypi/simple
+[uv]   tencent  --- https://mirrors.cloud.tencent.com/pypi/simple
+[uv]   huawei   --- https://repo.huaweicloud.com/repository/pypi/simple
+[uv]   ustc     --- https://mirrors.ustc.edu.cn/pypi/simple
+```
 
 Lists built-in and custom entries. The `*` marks the index effective in the current
 directory, not merely the last user-level selection.
 
 ### `mirr current`
 
-Uses nrm's familiar sentence-shaped output. It shows the catalog name when the
+Prints the effective index as a plain sentence. It shows the catalog name when the
 effective URL is known, `--show-url` substitutes the URL, and an uncataloged URL
 is followed by the `mirr add` command needed to catalog it.
 
@@ -124,8 +129,8 @@ Verbose output includes the source and configuration path where applicable.
 
 ### `mirr use [name]`
 
-Changes uv's user-level `default-index` while preserving unrelated settings and named
-supplemental indexes.
+Changes uv's user-level default index (writing a structured `[[index]] default = true`
+entry) while preserving unrelated settings and named supplemental indexes.
 
 ```console
 mirr use pypi
@@ -161,26 +166,29 @@ mirr rename company internal
 mirr del internal
 ```
 
-Built-in entries cannot be renamed or deleted. An active custom entry must be replaced
-by another selection before deletion.
+`mirr add <name> <url> [home]`: `url` is the index address (required), `home` is a
+homepage address used by `mirr home` (optional - omit it and `mirr home` won't work for
+that entry). Built-in entries cannot be renamed or deleted. An active custom entry must
+be replaced by another selection before deletion.
 
 ### Homepages and reachability
 
 ```console
 mirr home pypi
-mirr home pypi firefox
+mirr home pypi firefox   # the second argument picks which browser to open
 mirr test pypi
 mirr test
 mirr test --timeout 10
 ```
 
-`mirr test` performs a lightweight, TLS-verified `HEAD` request against the `pip/`
-project page beneath each Simple Repository endpoint; it never downloads the root index.
-If a server does not support `HEAD`, mirr requests and reads at most one byte instead.
-All-entry tests use bounded concurrency and print results in catalog order. As in nrm,
-`*` marks the effective current index, columns are aligned, and the fastest successful
-result is highlighted. This is a reachability and latency check, not a package-download
-throughput benchmark.
+`mirr test` (uv/pip) performs a lightweight, TLS-verified `HEAD` request against the
+`pip/` project page beneath each Simple Repository endpoint; it never downloads the root
+index. npm instead probes the registry root, and conda probes the channel's
+`noarch/repodata.json` - same idea, different endpoint. If a server does not support
+`HEAD`, mirr sends a `GET` instead and reads at most one byte. All-entry tests use bounded
+concurrency and print results in catalog order. `*` marks the effective current index,
+columns are aligned, and the fastest successful result is highlighted. This is a
+reachability and latency check, not a package-download throughput benchmark.
 
 ## Configuration precedence
 
@@ -208,26 +216,47 @@ nearest scope > user > system/global" shape, just with different variable names 
 | pip | `PIP_INDEX_URL` | the active virtualenv (`$VIRTUAL_ENV/pip.conf`) | `pip.conf` (platform-specific path) |
 | npm | `npm_config_registry` | the current directory's `.npmrc` | `~/.npmrc` |
 
-Each tool's custom catalog is stored separately
-(`~/.config/mirr/{uv,pip,npm,conda}.toml`; the historical `config.toml` is kept as-is as
-uv's catalog file, no migration needed).
+Each tool's custom catalog is stored separately: `~/.config/mirr/{uv,pip,npm,conda}.toml`
+on Linux/macOS, `%APPDATA%\mirr\{uv,pip,npm,conda}.toml` on Windows. If you used an older,
+uv-only version of mirr, a leftover `config.toml` is recognized as-is as uv's catalog file
+- no manual migration needed.
 
-## Conflict recovery
+## Write format and conflict handling
 
-mirr normally writes a scalar `default-index`. A simple anonymous structured default such as:
+The rules below are specific to uv's TOML config - pip's `pip.conf` and npm's `.npmrc`
+are each just a single key-value pair (`index-url`/`registry`), so mirr simply overwrites
+that value, with none of the named-entry or conflict-detection complexity described here.
+
+mirr writes uv's recommended structured form, `[[index]] default = true`, not the scalar
+`index-url` that uv's own docs mark as legacy. Note that `default-index` itself is never a
+valid config-file field - it's only the name of the `--default-index` CLI flag and the
+`UV_DEFAULT_INDEX` environment variable, and writing it as a field would make uv fail to
+parse the config. If a legacy `index-url` scalar already exists, it is removed when the new
+structured default is written, so the config never ends up with two conflicting defaults.
+
+In the user-level `uv.toml`, mirr tags the entry it writes with a catalog name (e.g.
+`name = "tsinghua"`), and updates that entry in place on the next `mirr use <name>` instead of
+appending new ones:
 
 ```toml
 [[index]]
-url = "https://old.example/simple"
+name = "tsinghua"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 default = true
 ```
 
-can be replaced safely. A user-level `uv.toml` default containing only `name`, `url`, and
-`default` is updated in place so `mirr use <name>` remains compatible with uv's named-index
-format. Named defaults in `pyproject.toml`, duplicate target names, authentication behavior,
-publish URLs, and other extra semantics are left unchanged and reported as conflicts for
-manual review. mirr also refuses malformed TOML and leaves the original file unchanged when
-parsing, validation, or atomic replacement fails.
+`pyproject.toml` is usually shared and reviewed by a team, so the default mirr writes there is
+**unnamed** (`[[tool.uv.index]] url = "..." default = true`), and mirr never renames or rewrites
+an existing named default there - that's treated as a conflict for manual resolution.
+
+In any of these cases, mirr refuses to act automatically, leaves the file untouched, and
+reports a conflict for manual resolution:
+
+- The existing default carries fields beyond `name`, `url`, and `default` (unknown
+  semantics like `explicit` or `authenticate`)
+- There are multiple `default = true` entries
+- Switching would collide with another named entry
+- The TOML itself is malformed (parsing, validation, or atomic replacement fails)
 
 ## Security boundaries
 
