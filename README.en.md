@@ -21,6 +21,12 @@ Requires Python 3.9 or later.
 $ uv tool install mirr
 ```
 
+Don't have uv? Install with pip instead:
+
+```console
+$ pip install mirr
+```
+
 ### Test uv's mirrors and switch to the fastest one
 
 ```console

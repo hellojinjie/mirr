@@ -18,6 +18,12 @@
 $ uv tool install mirr
 ```
 
+没有安装 uv?也可以用 pip 安装:
+
+```console
+$ pip install mirr
+```
+
 ### 为 uv 测速并切换到最快的镜像
 
 ```console
