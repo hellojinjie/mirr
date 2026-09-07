@@ -1,12 +1,33 @@
 {
-  "name": "mirr-npm",
+  "name": "@hellojinjie/mirr",
   "version": "0.1.0",
   "description": "Standalone Node CLI for viewing and switching the user-level npm registry (a minimal, dependency-free companion to the Python mirr tool).",
+  "keywords": [
+    "npm",
+    "registry",
+    "mirror",
+    "npmrc",
+    "cli"
+  ],
+  "license": "MIT",
+  "author": "Jie Jin <hellojinjie@gmail.com>",
+  "homepage": "https://github.com/hellojinjie/mirr/tree/main/mirr-npm#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hellojinjie/mirr.git",
+    "directory": "mirr-npm"
+  },
+  "bugs": {
+    "url": "https://github.com/hellojinjie/mirr/issues"
+  },
   "bin": {
-    "mirr": "./bin/mirr.js"
+    "mirr": "bin/mirr.js"
   },
   "engines": {
     "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "test": "node --test"
@@ -14,6 +35,7 @@
   "files": [
     "bin",
     "src",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ]
 }

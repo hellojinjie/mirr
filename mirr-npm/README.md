@@ -1,4 +1,4 @@
-# mirr-npm
+# @hellojinjie/mirr
 
 A tiny, dependency-free Node CLI for viewing and switching the **user-level**
 npm registry. It is a standalone companion to the Python
@@ -8,7 +8,7 @@ installed (no Python/uv required).
 ## Install
 
 ```sh
-npm install -g mirr-npm
+npm install -g @hellojinjie/mirr
 ```
 
 This installs a `mirr` executable. Requires Node.js 18 or newer.
