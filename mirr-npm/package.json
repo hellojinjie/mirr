@@ -1,0 +1,19 @@
+{
+  "name": "mirr-npm",
+  "version": "0.1.0",
+  "description": "Standalone Node CLI for viewing and switching the user-level npm registry (a minimal, dependency-free companion to the Python mirr tool).",
+  "bin": {
+    "mirr": "./bin/mirr.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md"
+  ]
+}
